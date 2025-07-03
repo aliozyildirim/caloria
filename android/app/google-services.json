@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "698846382043",
+    "project_id": "caloria-a35a6",
+    "storage_bucket": "caloria-a35a6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:698846382043:android:81483358b32471333489fe",
+        "android_client_info": {
+          "package_name": "com.caloria.caloria"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3G8fzF7OesEwcyCcftTGNCCPHQsdAyNo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+} 

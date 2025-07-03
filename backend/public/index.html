@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caloria - Kalori Takip Uygulaması</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading" class="loading-screen">
+        <div class="loader">
+            <div class="loader-circle"></div>
+            <h2>Caloria</h2>
+            <p>Yükleniyor...</p>
+        </div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen hidden">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1><i class="fas fa-utensils"></i> Caloria</h1>
+                <p>Sağlıklı yaşamın dijital asistanı</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button class="tab-btn active" data-tab="login">Giriş Yap</button>
+                <button class="tab-btn" data-tab="register">Kayıt Ol</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form">
+                <form id="loginFormElement">
+                    <div class="form-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="text" id="loginEmail" placeholder="Email veya Kullanıcı Adı" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="loginPassword" placeholder="Şifre" required>
+                        <button type="button" class="toggle-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Giriş Yap
+                    </button>
+                </form>
+                <button id="demoLogin" class="btn-demo">
+                    <i class="fas fa-play"></i>
+                    Demo Hesabı ile Giriş
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <div id="registerForm" class="auth-form hidden">
+                <form id="registerFormElement">
+                    <div class="form-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="registerFullName" placeholder="Ad Soyad" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="registerEmail" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-at"></i>
+                        <input type="text" id="registerUsername" placeholder="Kullanıcı Adı" required>
+                    </div>
+                    <div class="form-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="registerPassword" placeholder="Şifre" required>
+                        <button type="button" class="toggle-password">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        Kayıt Ol
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainApp" class="main-app hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    <span>Caloria</span>
+                </div>
+                <nav class="nav-menu">
+                    <button class="nav-btn active" data-page="dashboard">
+                        <i class="fas fa-home"></i>
+                        <span>Ana Sayfa</span>
+                    </button>
+                    <button class="nav-btn" data-page="meals">
+                        <i class="fas fa-utensils"></i>
+                        <span>Yemekler</span>
+                    </button>
+                    <button class="nav-btn" data-page="stories">
+                        <i class="fas fa-images"></i>
+                        <span>Hikayeler</span>
+                    </button>
+                    <button class="nav-btn" data-page="profile">
+                        <i class="fas fa-user"></i>
+                        <span>Profil</span>
+                    </button>
+                    <button class="nav-btn" data-page="admin">
+                        <i class="fas fa-cog"></i>
+                        <span>Admin</span>
+                    </button>
+                </nav>
+                <div class="user-menu">
+                    <div class="user-info">
+                        <img id="userAvatar" src="https://via.placeholder.com/40" alt="User">
+                        <span id="userName">Kullanıcı</span>
+                    </div>
+                    <button id="logoutBtn" class="btn-logout">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page active">
+            <div class="page-header">
+                <h1>Hoş Geldin! 👋</h1>
+                <p>Bugünkü hedeflerini takip et</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="todayCalories">0</h3>
+                        <p>Bugün Alınan Kalori</p>
+                        <small id="calorieGoal">/ 2000 hedef</small>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="todayMeals">0</h3>
+                        <p>Bugün Eklenen Yemek</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="weeklyAvg">0</h3>
+                        <p>Haftalık Ortalama</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="currentStreak">0</h3>
+                        <p>Günlük Seri</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="quick-actions">
+                    <h2>Hızlı İşlemler</h2>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="addMeal('breakfast')">
+                            <i class="fas fa-coffee"></i>
+                            <span>Kahvaltı Ekle</span>
+                        </button>
+                        <button class="action-btn" onclick="addMeal('lunch')">
+                            <i class="fas fa-hamburger"></i>
+                            <span>Öğle Yemeği</span>
+                        </button>
+                        <button class="action-btn" onclick="addMeal('dinner')">
+                            <i class="fas fa-pizza-slice"></i>
+                            <span>Akşam Yemeği</span>
+                        </button>
+                        <button class="action-btn" onclick="addMeal('snack')">
+                            <i class="fas fa-cookie"></i>
+                            <span>Atıştırmalık</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="recent-meals">
+                    <h2>Son Yemekler</h2>
+                    <div id="recentMealsList" class="meals-list">
+                        <!-- Meals will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meals Page -->
+        <div id="mealsPage" class="page">
+            <div class="page-header">
+                <h1>Yemek Geçmişi</h1>
+                <button id="addMealBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Yemek Ekle
+                </button>
+            </div>
+            
+            <div class="meals-filter">
+                <input type="date" id="mealDateFilter" class="date-input">
+                <select id="mealTypeFilter" class="select-input">
+                    <option value="">Tüm Yemekler</option>
+                    <option value="breakfast">Kahvaltı</option>
+                    <option value="lunch">Öğle Yemeği</option>
+                    <option value="dinner">Akşam Yemeği</option>
+                    <option value="snack">Atıştırmalık</option>
+                </select>
+            </div>
+
+            <div id="mealsContainer" class="meals-container">
+                <!-- Meals will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Stories Page -->
+        <div id="storiesPage" class="page">
+            <div class="page-header">
+                <h1>Hikayeler</h1>
+                <button id="addStoryBtn" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Hikaye Ekle
+                </button>
+            </div>
+            
+            <div id="storiesContainer" class="stories-container">
+                <!-- Stories will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page">
+            <div class="page-header">
+                <h1>Profil</h1>
+            </div>
+            
+            <div class="profile-content">
+                <div class="profile-card">
+                    <div class="profile-avatar">
+                        <img id="profileAvatar" src="https://via.placeholder.com/100" alt="Profile">
+                        <button class="avatar-edit">
+                            <i class="fas fa-camera"></i>
+                        </button>
+                    </div>
+                    <div class="profile-info">
+                        <h2 id="profileName">Kullanıcı Adı</h2>
+                        <p id="profileEmail">email@example.com</p>
+                    </div>
+                </div>
+
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">BMI</span>
+                        <span id="profileBMI" class="stat-value">--</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Hedef Kilo</span>
+                        <span id="profileTargetWeight" class="stat-value">-- kg</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Günlük Hedef</span>
+                        <span id="profileDailyGoal" class="stat-value">-- kcal</span>
+                    </div>
+                </div>
+
+                <form id="profileForm" class="profile-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Ad Soyad</label>
+                            <input type="text" id="profileFormName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Yaş</label>
+                            <input type="number" id="profileFormAge" min="16" max="100" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Boy (cm)</label>
+                            <input type="number" id="profileFormHeight" min="100" max="250" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Kilo (kg)</label>
+                            <input type="number" id="profileFormWeight" min="30" max="300" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Cinsiyet</label>
+                            <select id="profileFormGender" required>
+                                <option value="">Seçiniz</option>
+                                <option value="male">Erkek</option>
+                                <option value="female">Kadın</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Hedef Kilo (kg)</label>
+                            <input type="number" id="profileFormTargetWeight" min="30" max="300" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Aktivite Seviyesi</label>
+                        <select id="profileFormActivityLevel" required>
+                            <option value="">Seçiniz</option>
+                            <option value="sedentary">Hareketsiz (Masa başı iş)</option>
+                            <option value="light">Hafif Aktif (Haftada 1-3 gün spor)</option>
+                            <option value="moderate">Orta Aktif (Haftada 3-5 gün spor)</option>
+                            <option value="active">Aktif (Haftada 6-7 gün spor)</option>
+                            <option value="very_active">Çok Aktif (Günde 2 kez spor)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Hedef</label>
+                        <select id="profileFormGoal" required>
+                            <option value="">Seçiniz</option>
+                            <option value="lose">Kilo Vermek</option>
+                            <option value="maintain">Kilonu Korumak</option>
+                            <option value="gain">Kilo Almak</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Profili Kaydet
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div id="adminPage" class="page">
+            <div class="page-header">
+                <h1>Admin Panel</h1>
+                <button id="refreshStats" class="btn-secondary">
+                    <i class="fas fa-sync"></i>
+                    Yenile
+                </button>
+            </div>
+            
+            <div class="admin-stats">
+                <div class="admin-stat-card">
+                    <h3 id="totalUsers">0</h3>
+                    <p>Toplam Kullanıcı</p>
+                </div>
+                <div class="admin-stat-card">
+                    <h3 id="totalMeals">0</h3>
+                    <p>Toplam Yemek</p>
+                </div>
+                <div class="admin-stat-card">
+                    <h3 id="totalStories">0</h3>
+                    <p>Toplam Hikaye</p>
+                </div>
+                <div class="admin-stat-card">
+                    <h3 id="totalFavorites">0</h3>
+                    <p>Toplam Favori</p>
+                </div>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" data-tab="users">Kullanıcılar</button>
+                <button class="admin-tab-btn" data-tab="meals">Yemekler</button>
+                <button class="admin-tab-btn" data-tab="stories">Hikayeler</button>
+            </div>
+
+            <div id="adminUsersTab" class="admin-tab-content">
+                <div id="usersTable" class="data-table">
+                    <!-- Users data will be loaded here -->
+                </div>
+            </div>
+
+            <div id="adminMealsTab" class="admin-tab-content hidden">
+                <div id="mealsTable" class="data-table">
+                    <!-- Meals data will be loaded here -->
+                </div>
+            </div>
+
+            <div id="adminStoriesTab" class="admin-tab-content hidden">
+                <div id="storiesTable" class="data-table">
+                    <!-- Stories data will be loaded here -->
+                </div>
+            </div>
+
+            <div class="admin-section">
+                <h3>👨‍💼 Admin Panel</h3>
+                <div class="admin-buttons">
+                    <button onclick="loadUsers()" class="admin-btn">👥 Kullanıcılar</button>
+                    <button onclick="loadStories()" class="admin-btn">📖 Hikayeler</button>
+                    <button onclick="loadMeals()" class="admin-btn">🍽️ Yemekler</button>
+                    <button onclick="loadStats()" class="admin-btn">📊 İstatistikler</button>
+                    <button onclick="createDemoData()" class="admin-btn demo-btn">🎭 Demo Veri Oluştur</button>
+                </div>
+                <div id="adminContent" class="admin-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Meal Modal -->
+    <div id="addMealModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Yemek Ekle</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addMealForm">
+                <div class="form-group">
+                    <label>Yemek Adı</label>
+                    <input type="text" id="mealName" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Kalori</label>
+                        <input type="number" id="mealCalories" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Protein (g)</label>
+                        <input type="number" id="mealProtein" min="0" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Karbonhidrat (g)</label>
+                        <input type="number" id="mealCarbs" min="0" step="0.1" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Yağ (g)</label>
+                        <input type="number" id="mealFat" min="0" step="0.1" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Öğün Tipi</label>
+                    <select id="mealType" required>
+                        <option value="breakfast">Kahvaltı</option>
+                        <option value="lunch">Öğle Yemeği</option>
+                        <option value="dinner">Akşam Yemeği</option>
+                        <option value="snack">Atıştırmalık</option>
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary modal-cancel">İptal</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save"></i>
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Story Modal -->
+    <div id="addStoryModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Hikaye Ekle</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="addStoryForm">
+                <div class="form-group">
+                    <label>Açıklama</label>
+                    <textarea id="storyDescription" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Kalori</label>
+                    <input type="number" id="storyCalories" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label>Resim URL (Opsiyonel)</label>
+                    <input type="url" id="storyImageUri" placeholder="https://example.com/image.jpg">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary modal-cancel">İptal</button>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-share"></i>
+                        Paylaş
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/js/app.js"></script>
+    <style>
+        .admin-btn:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translateY(-1px);
+        }
+
+        .demo-btn {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%) !important;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .admin-content {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+
+    <script>
+        let currentUser = null;
+        let authToken = localStorage.getItem('authToken');
+
+        // ... existing code ...
+
+        // Add createDemoData function
+        async function createDemoData() {
+            if (!authToken) {
+                showToast('Lütfen önce giriş yapın', 'error');
+                return;
+            }
+
+            try {
+                showToast('Demo veriler oluşturuluyor...', 'info');
+                
+                const response = await fetch('/api/admin/create-demo-data', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast(`Demo veriler oluşturuldu! ${data.users} kullanıcı, ${data.stories} hikaye, ${data.meals} yemek`, 'success');
+                    // Refresh the page to see new data
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showToast(data.error || 'Demo veri oluşturma başarısız', 'error');
+                }
+            } catch (error) {
+                console.error('Demo data error:', error);
+                showToast('Bağlantı hatası', 'error');
+            }
+        }
+    </script>
+</body>
+</html> 

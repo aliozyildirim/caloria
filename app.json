@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Caloria",
+    "slug": "caloria",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Allow Caloria to use the camera for scanning barcodes on packaged food products.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select food photos for analysis.",
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "notification": {
+      "color": "#00BCD4",
+      "androidMode": "default",
+      "androidCollapsedTitle": "Caloria Hatırlatıcıları"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Caloria to access your camera to capture food photos for calorie analysis and scan barcodes."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Caloria to access your photos to select food images for analysis."
+        }
+      ],
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Allow Caloria to use the camera for scanning barcodes on packaged food products."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#00BCD4",
+          "defaultChannel": "default"
+        }
+      ]
+    ],
+    "scheme": "caloria",
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "b1cb57ea-8028-48fe-8715-2714bcebc70c"
+      }
+    }
+  }
+}
