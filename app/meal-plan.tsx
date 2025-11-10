@@ -64,12 +64,17 @@ export default function MealPlanScreen() {
 
   useEffect(() => {
     loadMealPlans();
-    // Set today as selected day initially
-    const today = new Date();
-    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0
-    setSelectedDayIndex(mondayIndex);
   }, [selectedWeek]);
+
+  useEffect(() => {
+    // Set today as selected day initially - only on first load
+    if (selectedWeek === 0) {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      const mondayIndex = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to Monday = 0
+      setSelectedDayIndex(mondayIndex);
+    }
+  }, []);
 
   const loadMealPlans = async () => {
     try {
