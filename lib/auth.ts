@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import config from './config';
 
 // API Configuration
-const API_BASE = 'http://localhost:5001/api';
+const API_BASE = config.pythonApiUrl + '/api';
 
 export interface User {
   id: number;

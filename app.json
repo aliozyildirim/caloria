@@ -66,7 +66,8 @@
       },
       "eas": {
         "projectId": "b1cb57ea-8028-48fe-8715-2714bcebc70c"
-      }
+      },
+      "environment": "dev"
     }
   }
 }

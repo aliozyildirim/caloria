@@ -16,8 +16,10 @@ export interface FoodAnalysis {
   debug_info?: string;
 }
 
+import config from './config';
+
 // Python backend URL
-const PYTHON_BACKEND_URL = 'http://localhost:5001';
+const PYTHON_BACKEND_URL = config.pythonApiUrl;
 
 // Convert image to base64
 const imageToBase64 = async (imageUri: string): Promise<string> => {

@@ -1,6 +1,7 @@
 import AuthService from './auth';
+import config from './config';
 
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = config.apiUrl;
 
 export interface Meal {
   id: number;
