@@ -10,6 +10,7 @@ import AuthService from '../lib/auth';
 import AuthScreen from './auth';
 import OnboardingScreen from './onboarding';
 import ApiService from '../lib/api';
+import NotificationService from '../lib/notifications';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { ThemeProvider as CaloriaThemeProvider } from '../lib/ThemeProvider';
@@ -60,6 +61,18 @@ export default function RootLayout() {
         // Check authentication status
         const authStatus = AuthService.isAuthenticated();
         setIsAuthenticated(authStatus);
+        
+        // Initialize notifications
+        if (authStatus) {
+          try {
+            console.log('🔔 Initializing notifications...');
+            await NotificationService.initialize();
+            await NotificationService.setupAndroidChannel();
+            console.log('✅ Notifications initialized');
+          } catch (error) {
+            console.error('❌ Notification initialization failed:', error);
+          }
+        }
         
         // If authenticated, check if user needs onboarding
         if (authStatus) {
