@@ -20,29 +20,58 @@ class FoodRecognitionModel:
         self.feature_extractor = None
         self.model = None
         self.food_nutrition_db = {
-            # Common Turkish foods with nutrition info
+            # Common foods with nutrition info (per 100g)
             'pizza': {'calories': 266, 'protein': 11, 'carbs': 33, 'fat': 10},
             'burger': {'calories': 540, 'protein': 25, 'carbs': 40, 'fat': 31},
+            'hamburger': {'calories': 540, 'protein': 25, 'carbs': 40, 'fat': 31},
             'salad': {'calories': 33, 'protein': 3, 'carbs': 6, 'fat': 0.3},
             'pasta': {'calories': 220, 'protein': 8, 'carbs': 44, 'fat': 1.1},
+            'spaghetti': {'calories': 220, 'protein': 8, 'carbs': 44, 'fat': 1.1},
             'chicken': {'calories': 239, 'protein': 27, 'carbs': 0, 'fat': 14},
             'rice': {'calories': 130, 'protein': 2.7, 'carbs': 28, 'fat': 0.3},
             'bread': {'calories': 265, 'protein': 9, 'carbs': 49, 'fat': 3.2},
             'egg': {'calories': 155, 'protein': 13, 'carbs': 1.1, 'fat': 11},
+            'eggs': {'calories': 155, 'protein': 13, 'carbs': 1.1, 'fat': 11},
             'fish': {'calories': 206, 'protein': 22, 'carbs': 0, 'fat': 12},
             'soup': {'calories': 86, 'protein': 6, 'carbs': 8, 'fat': 3},
             'sandwich': {'calories': 300, 'protein': 15, 'carbs': 30, 'fat': 15},
             'fruit': {'calories': 52, 'protein': 0.3, 'carbs': 14, 'fat': 0.2},
+            'apple': {'calories': 52, 'protein': 0.3, 'carbs': 14, 'fat': 0.2},
+            'banana': {'calories': 89, 'protein': 1.1, 'carbs': 23, 'fat': 0.3},
+            'orange': {'calories': 47, 'protein': 0.9, 'carbs': 12, 'fat': 0.1},
+            'strawberry': {'calories': 32, 'protein': 0.7, 'carbs': 8, 'fat': 0.3},
             'vegetable': {'calories': 25, 'protein': 1, 'carbs': 5, 'fat': 0.1},
+            'vegetables': {'calories': 25, 'protein': 1, 'carbs': 5, 'fat': 0.1},
             'meat': {'calories': 250, 'protein': 26, 'carbs': 0, 'fat': 15},
+            'beef': {'calories': 250, 'protein': 26, 'carbs': 0, 'fat': 15},
+            'pork': {'calories': 242, 'protein': 27, 'carbs': 0, 'fat': 14},
             'cheese': {'calories': 113, 'protein': 7, 'carbs': 1, 'fat': 9},
             'yogurt': {'calories': 59, 'protein': 10, 'carbs': 3.6, 'fat': 0.4},
             'cake': {'calories': 257, 'protein': 3, 'carbs': 46, 'fat': 7},
             'cookie': {'calories': 502, 'protein': 5.9, 'carbs': 64, 'fat': 25},
+            'cookies': {'calories': 502, 'protein': 5.9, 'carbs': 64, 'fat': 25},
             'ice_cream': {'calories': 207, 'protein': 3.5, 'carbs': 24, 'fat': 11},
+            'ice cream': {'calories': 207, 'protein': 3.5, 'carbs': 24, 'fat': 11},
             'coffee': {'calories': 2, 'protein': 0.3, 'carbs': 0, 'fat': 0},
             'tea': {'calories': 1, 'protein': 0, 'carbs': 0.3, 'fat': 0},
             'water': {'calories': 0, 'protein': 0, 'carbs': 0, 'fat': 0},
+            'fries': {'calories': 312, 'protein': 3.4, 'carbs': 41, 'fat': 15},
+            'french fries': {'calories': 312, 'protein': 3.4, 'carbs': 41, 'fat': 15},
+            'hot dog': {'calories': 290, 'protein': 10, 'carbs': 24, 'fat': 18},
+            'hotdog': {'calories': 290, 'protein': 10, 'carbs': 24, 'fat': 18},
+            'taco': {'calories': 226, 'protein': 9, 'carbs': 21, 'fat': 13},
+            'burrito': {'calories': 206, 'protein': 8, 'carbs': 26, 'fat': 8},
+            'sushi': {'calories': 143, 'protein': 6, 'carbs': 21, 'fat': 4},
+            'steak': {'calories': 271, 'protein': 25, 'carbs': 0, 'fat': 19},
+            'bacon': {'calories': 541, 'protein': 37, 'carbs': 1.4, 'fat': 42},
+            'pancake': {'calories': 227, 'protein': 6, 'carbs': 28, 'fat': 10},
+            'pancakes': {'calories': 227, 'protein': 6, 'carbs': 28, 'fat': 10},
+            'waffle': {'calories': 291, 'protein': 7, 'carbs': 33, 'fat': 15},
+            'waffles': {'calories': 291, 'protein': 7, 'carbs': 33, 'fat': 15},
+            'donut': {'calories': 452, 'protein': 5, 'carbs': 51, 'fat': 25},
+            'doughnut': {'calories': 452, 'protein': 5, 'carbs': 51, 'fat': 25},
+            'muffin': {'calories': 377, 'protein': 6, 'carbs': 51, 'fat': 17},
+            'croissant': {'calories': 406, 'protein': 8, 'carbs': 46, 'fat': 21},
         }
         self.load_model()
     
@@ -107,7 +136,8 @@ class FoodRecognitionModel:
             confidence = top_predictions[0]['confidence']
             
             print(f"✅ AI Prediction: {predicted_class} ({confidence:.2%})")
-            print(f"   Top 3: {', '.join([f'{p['name']} ({p['confidence']:.1%})' for p in top_predictions])}")
+            top_3_str = ', '.join([f"{p['name']} ({p['confidence']:.1%})" for p in top_predictions])
+            print(f"   Top 3: {top_3_str}")
             
             return {
                 'food_name': predicted_class,
