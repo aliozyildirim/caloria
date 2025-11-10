@@ -18,7 +18,7 @@ import { router } from 'expo-router';
 import AuthService from '../lib/auth';
 import ApiService from '../lib/api';
 import { calculateBMR, calculateTDEE, calculateMacros, calculateBMI } from '../lib/calorieCalculator';
-import { onboardingEvents } from './_layout';
+import { onboardingEvents } from '../lib/events';
 
 const { width } = Dimensions.get('window');
 

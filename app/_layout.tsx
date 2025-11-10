@@ -14,27 +14,7 @@ import NotificationService from '../lib/notifications';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { ThemeProvider as CaloriaThemeProvider } from '../lib/ThemeProvider';
-
-// Global event emitter for onboarding completion
-class OnboardingEvents {
-  private listeners: Array<() => void> = [];
-
-  addListener(callback: () => void): () => void {
-    this.listeners.push(callback);
-    return () => {
-      const index = this.listeners.indexOf(callback);
-      if (index > -1) {
-        this.listeners.splice(index, 1);
-      }
-    };
-  }
-
-  emit(): void {
-    this.listeners.forEach(callback => callback());
-  }
-}
-
-export const onboardingEvents = new OnboardingEvents();
+import { onboardingEvents } from '../lib/events';
 
 // Splash screen'i göster
 SplashScreen.preventAutoHideAsync();

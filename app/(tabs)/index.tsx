@@ -34,6 +34,11 @@ export default function HomeScreen() {
 
   const { theme } = useTheme();
 
+  // Gradient colors based on theme
+  const gradientColors = theme.name === 'Gece Teması'
+    ? ['#1a1a2e', '#16213e', '#0f3460'] // Dark mode - deep blue/black
+    : ['#6366f1', '#8b5cf6', '#d946ef']; // Light mode - vibrant purple
+
   useFocusEffect(
     React.useCallback(() => {
       loadData();
@@ -87,9 +92,12 @@ export default function HomeScreen() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return '🌅 Günaydın';
-    if (hour < 18) return '☀️ İyi Günler';
-    return '🌙 İyi Akşamlar';
+    const user = AuthService.getCurrentUser();
+    const name = userProfile?.name || user?.fullName?.split(' ')[0] || '';
+    
+    if (hour < 12) return name ? `🌅 Günaydın, ${name}` : '🌅 Günaydın';
+    if (hour < 18) return name ? `☀️ İyi Günler, ${name}` : '☀️ İyi Günler';
+    return name ? `🌙 İyi Akşamlar, ${name}` : '🌙 İyi Akşamlar';
   };
 
   const handleWaterIntake = async () => {
@@ -113,7 +121,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <LinearGradient colors={['#6366f1', '#8b5cf6', '#d946ef']} style={styles.gradient}>
+        <LinearGradient colors={gradientColors} style={styles.gradient}>
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingEmoji}>✨</Text>
@@ -127,7 +135,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={['#6366f1', '#8b5cf6', '#d946ef']} style={styles.gradient}>
+      <LinearGradient colors={gradientColors} style={styles.gradient}>
         <SafeAreaView style={styles.safeArea}>
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -135,8 +143,16 @@ export default function HomeScreen() {
           >
             {/* Compact Header */}
             <View style={styles.header}>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <View style={styles.headerLeft}>
+                <Text style={styles.greeting}>{getGreeting()}</Text>
+              </View>
               <View style={styles.headerRight}>
+                <TouchableOpacity 
+                  style={styles.switchBtn}
+                  onPress={() => router.replace('/index-old')}
+                >
+                  <Ionicons name="swap-horizontal" size={20} color="white" />
+                </TouchableOpacity>
                 <View style={styles.xpBadge}>
                   <Ionicons name="star" size={14} color="#FFD700" />
                   <Text style={styles.xpText}>{userXP.totalXP}</Text>
@@ -301,19 +317,42 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     fontWeight: '600',
+    marginBottom: 20,
+  },
+  backToNewBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  backToNewText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     paddingHorizontal: 24,
     paddingTop: 16,
     paddingBottom: 24,
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
     fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+  },
+  switchBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerRight: {
     flexDirection: 'row',

@@ -214,14 +214,23 @@ export default function HomeScreen() {
                 </Text>
               </View>
               
-              {/* User Level Badge */}
-              {userXP.level > 1 && (
-                <View style={[styles.levelBadge, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : theme.accentColor + '40' }]}>
-                  <Text style={[styles.levelText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
-                    Lv.{userXP.level}
-                  </Text>
-                </View>
-              )}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <TouchableOpacity 
+                  style={[styles.switchBtn, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : theme.accentColor + '40' }]}
+                  onPress={() => router.replace('/(tabs)/')}
+                >
+                  <Ionicons name="swap-horizontal" size={20} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
+                </TouchableOpacity>
+                
+                {/* User Level Badge */}
+                {userXP.level > 1 && (
+                  <View style={[styles.levelBadge, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : theme.accentColor + '40' }]}>
+                    <Text style={[styles.levelText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                      Lv.{userXP.level}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </Animated.View>
 
             {/* Main Stats - Calorie & Water */}
@@ -647,6 +656,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     fontStyle: 'italic',
+  },
+  switchBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   levelBadge: {
     backgroundColor: 'rgba(255,255,255,0.2)',
