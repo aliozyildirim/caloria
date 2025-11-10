@@ -18,11 +18,13 @@ import ApiService from '../../lib/api';
 import AuthService from '../../lib/auth';
 import NotificationService from '../../lib/notifications';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
 export default function WaterScreen() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   const [waterIntake, setWaterIntake] = useState(0);
   const [waterGoal, setWaterGoal] = useState(8);
@@ -114,7 +116,7 @@ export default function WaterScreen() {
       }
 
       setShowSettings(false);
-      Alert.alert('Ayarlar Kaydedildi! 💧', 'Su takibi ayarlarınız güncellendi.');
+      Alert.alert('💧 ' + t.common.success, t.water.settingsSaved);
     } catch (error) {
       console.error('Error saving water settings:', error);
       Alert.alert('Hata!', 'Ayarlar kaydedilemedi.');
@@ -152,8 +154,8 @@ export default function WaterScreen() {
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={[styles.headerTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>💧 Su Takibi</Text>
-              <Text style={[styles.headerSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>Günlük hidrasyon hedefiniz</Text>
+              <Text style={[styles.headerTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>💧 {t.water.title}</Text>
+              <Text style={[styles.headerSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>{ t.water.dailyGoal}</Text>
             </View>
             <TouchableOpacity 
               style={styles.settingsButton}
@@ -171,20 +173,20 @@ export default function WaterScreen() {
               <View style={styles.progressContainer}>
                 <View style={styles.circularProgress}>
                   <Text style={styles.progressText}>{progressPercentage}%</Text>
-                  <Text style={styles.progressSubtext}>{waterIntake}/{waterGoal} bardak</Text>
+                  <Text style={styles.progressSubtext}>{waterIntake}/{waterGoal} {t.water.glasses}</Text>
                 </View>
               </View>
 
               <Text style={styles.motivationText}>
                 {waterIntake >= waterGoal 
-                  ? '🎉 Harika! Günlük hedefini tamamladın!' 
-                  : `${waterGoal - waterIntake} bardak daha! 💪 Devam et!`}
+                  ? '🎉 ' + t.water.completed 
+                  : `${waterGoal - waterIntake} ${t.water.glasses} ${t.water.remaining}! 💪`}
               </Text>
             </View>
 
             {/* Water Glasses Grid */}
             <View style={styles.glassesCard}>
-              <Text style={styles.cardTitle}>Su Bardakları</Text>
+              <Text style={styles.cardTitle}>{t.water.waterGlasses}</Text>
               <View style={styles.glassesGrid}>
                 {Array.from({ length: waterGoal }, (_, i) => (
                   <TouchableOpacity
@@ -248,11 +250,11 @@ export default function WaterScreen() {
 
             {/* Tips Card */}
             <View style={styles.tipsCard}>
-              <Text style={styles.cardTitle}>💡 Su İçme İpuçları</Text>
+              <Text style={styles.cardTitle}>💡 {t.water.tips}</Text>
               <View style={styles.tipsList}>
-                <Text style={styles.tipItem}>• Günün başında bir bardak su için</Text>
-                <Text style={styles.tipItem}>• Yemeklerden önce su içmeyi unutmayın</Text>
-                <Text style={styles.tipItem}>• Egzersiz sırasında daha fazla su için</Text>
+                <Text style={styles.tipItem}>• {t.water.tip1}</Text>
+                <Text style={styles.tipItem}>• {t.water.tip2}</Text>
+                <Text style={styles.tipItem}>• {t.water.tip3}</Text>
                 <Text style={styles.tipItem}>• Su şişenizi her zaman yanınızda taşıyın</Text>
               </View>
             </View>
@@ -276,7 +278,7 @@ export default function WaterScreen() {
               style={styles.settingsGradient}
             >
               <View style={styles.settingsHeader}>
-                <Text style={styles.settingsTitle}>⚙️ Su Takibi Ayarları</Text>
+                <Text style={styles.settingsTitle}>⚙️ {t.water.settings}</Text>
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setShowSettings(false)}

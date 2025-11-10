@@ -14,6 +14,7 @@ import NotificationService from '../lib/notifications';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { ThemeProvider as CaloriaThemeProvider } from '../lib/ThemeProvider';
+import { LanguageProvider } from '../lib/LanguageProvider';
 import { onboardingEvents } from '../lib/events';
 
 // Splash screen'i göster
@@ -236,20 +237,22 @@ export default function RootLayout() {
 
   console.log('Showing main app tabs');
   return (
-    <CaloriaThemeProvider>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="analysis" />
-          <Stack.Screen name="favorites" />
-          <Stack.Screen name="settings" />
+    <LanguageProvider>
+      <CaloriaThemeProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="analysis" />
+            <Stack.Screen name="favorites" />
+            <Stack.Screen name="settings" />
           <Stack.Screen name="notifications" />
           <Stack.Screen name="diet-log" />
           <Stack.Screen name="meal-plan" />
           <Stack.Screen name="admin" />
-        </Stack>
-      </ThemeProvider>
-    </CaloriaThemeProvider>
+          </Stack>
+        </ThemeProvider>
+      </CaloriaThemeProvider>
+    </LanguageProvider>
   );
 }
 

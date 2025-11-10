@@ -438,28 +438,18 @@ export default function ProfileScreen() {
                   </View>
                 </View>
 
-                <View style={styles.settingsContainer}>
-                  <TouchableOpacity 
-                    style={styles.settingsButton}
-                    onPress={() => router.push('/settings')}
-                  >
-                    <Ionicons name="settings-outline" size={20} color="white" />
-                  </TouchableOpacity>
-
-                  {/* Tema Değiştirme Butonu */}
-                  <TouchableOpacity 
-                    style={[styles.settingsButton, { backgroundColor: theme.accentColor }]}
-                    onPress={() => {
-                      console.log('Navigating to challenges screen with rewards shop...');
-                      router.push({ 
-                        pathname: '/(tabs)/games', 
-                        params: { openModal: 'shop' } 
+                <TouchableOpacity 
+                  style={[styles.themeButton, { backgroundColor: theme.accentColor }]}
+                  onPress={() => {
+                    console.log('Navigating to challenges screen with rewards shop...');
+                    router.push({ 
+                      pathname: '/(tabs)/games', 
+                      params: { openModal: 'shop' } 
                       });
-                    }}
-                  >
-                    <Ionicons name="color-palette-outline" size={20} color="white" />
-                  </TouchableOpacity>
-                </View>
+                  }}
+                >
+                  <Ionicons name="color-palette-outline" size={20} color="white" />
+                </TouchableOpacity>
               </View>
 
               {/* Tema Kontrolleri */}
@@ -1037,8 +1027,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
   },
-  settingsContainer: {
-    flexDirection: 'row',
+  themeButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   settingsButton: {

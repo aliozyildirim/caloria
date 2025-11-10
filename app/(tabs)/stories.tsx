@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ApiService from '../../lib/api';
 import AuthService from '../../lib/auth';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 import PremiumEmojiPicker from '../../components/PremiumEmojiPicker';
 
 const { width } = Dimensions.get('window');
@@ -52,6 +53,7 @@ const formatTimeAgo = (timestamp: string) => {
 };
 
 export default function StoriesScreen() {
+  const { t } = useLanguage();
   const [stories, setStories] = useState<Story[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -81,7 +83,7 @@ export default function StoriesScreen() {
       setStories(storiesData || []);
     } catch (error) {
       console.error('Error loading stories:', error);
-      Alert.alert('Hata', 'Hikayeler yüklenirken bir hata oluştu');
+      Alert.alert(t.common.error, t.stories.loadError);
       setStories([]);
     } finally {
       setLoading(false);
@@ -112,7 +114,7 @@ export default function StoriesScreen() {
       );
     } catch (error) {
       console.error('Error liking story:', error);
-      Alert.alert('Hata', 'Beğeni işlemi başarısız oldu');
+      Alert.alert(t.common.error, t.stories.likeError);
     }
   };
 
@@ -235,10 +237,10 @@ export default function StoriesScreen() {
         >
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.header}>
-              <Text style={[styles.title, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📖 Hikayeler</Text>
+              <Text style={[styles.title, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📖 {t.stories.title}</Text>
             </View>
             <View style={styles.loadingContainer}>
-              <Text style={[styles.loadingText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>Hikayeler yükleniyor...</Text>
+              <Text style={[styles.loadingText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>{t.common.loading}</Text>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -257,7 +259,7 @@ export default function StoriesScreen() {
             colors={[theme.primaryColor, theme.secondaryColor]}
             style={styles.header}
           >
-            <Text style={[styles.title, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📖 Hikayeler</Text>
+            <Text style={[styles.title, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📖 {t.stories.title}</Text>
             <View style={styles.headerButtons}>
               <TouchableOpacity 
                 style={[styles.emojiButton, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : theme.accentColor + '40' }]}

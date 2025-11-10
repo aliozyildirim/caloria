@@ -16,6 +16,7 @@ import { router, useFocusEffect } from 'expo-router';
 import AuthService from '../../lib/auth';
 import ApiService from '../../lib/api';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -33,6 +34,8 @@ export default function HomeScreen() {
   const [todayChallenge, setTodayChallenge] = useState<any>(null);
 
   const { theme } = useTheme();
+  const { t, language, setLanguage } = useLanguage();
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
   // Gradient colors based on theme
   const gradientColors = theme.name === 'Gece Teması'
@@ -95,9 +98,9 @@ export default function HomeScreen() {
     const user = AuthService.getCurrentUser();
     const name = userProfile?.name || user?.fullName?.split(' ')[0] || '';
     
-    if (hour < 12) return name ? `🌅 Günaydın, ${name}` : '🌅 Günaydın';
-    if (hour < 18) return name ? `☀️ İyi Günler, ${name}` : '☀️ İyi Günler';
-    return name ? `🌙 İyi Akşamlar, ${name}` : '🌙 İyi Akşamlar';
+    if (hour < 12) return name ? `${t.home.goodMorning}, ${name}` : t.home.goodMorning;
+    if (hour < 18) return name ? `${t.home.goodAfternoon}, ${name}` : t.home.goodAfternoon;
+    return name ? `${t.home.goodEvening}, ${name}` : t.home.goodEvening;
   };
 
   const handleWaterIntake = async () => {
@@ -107,7 +110,7 @@ export default function HomeScreen() {
       try {
         await ApiService.updateWaterIntake(newIntake);
         if (newIntake >= waterGoal) {
-          Alert.alert('🎉 Harika!', 'Günlük su hedefinizi tamamladınız!');
+          Alert.alert(t.home.goalCompleted, t.home.waterGoalCompleted);
         }
       } catch (error) {
         setWaterIntake(waterIntake);
@@ -125,7 +128,7 @@ export default function HomeScreen() {
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingEmoji}>✨</Text>
-              <Text style={styles.loadingText}>Yükleniyor...</Text>
+              <Text style={styles.loadingText}>{t.home.loading}</Text>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -147,6 +150,38 @@ export default function HomeScreen() {
                 <Text style={styles.greeting}>{getGreeting()}</Text>
               </View>
               <View style={styles.headerRight}>
+                {/* Language Selector */}
+                <TouchableOpacity 
+                  style={styles.languageBtn}
+                  onPress={() => setShowLanguageMenu(!showLanguageMenu)}
+                >
+                  <Text style={styles.languageText}>{language.toUpperCase()}</Text>
+                  <Ionicons name="chevron-down" size={12} color="white" />
+                </TouchableOpacity>
+                
+                {showLanguageMenu && (
+                  <View style={styles.languageMenu}>
+                    <TouchableOpacity 
+                      style={[styles.languageOption, language === 'tr' && styles.languageOptionActive]}
+                      onPress={() => {
+                        setLanguage('tr');
+                        setShowLanguageMenu(false);
+                      }}
+                    >
+                      <Text style={styles.languageOptionText}>🇹🇷 Türkçe</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      style={[styles.languageOption, language === 'en' && styles.languageOptionActive]}
+                      onPress={() => {
+                        setLanguage('en');
+                        setShowLanguageMenu(false);
+                      }}
+                    >
+                      <Text style={styles.languageOptionText}>🇬🇧 English</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
                 <TouchableOpacity 
                   style={styles.switchBtn}
                   onPress={() => router.replace('/index-old')}
@@ -167,7 +202,7 @@ export default function HomeScreen() {
             <View style={styles.mainCalorieCard}>
               <View style={styles.calorieContent}>
                 <View style={styles.calorieLeft}>
-                  <Text style={styles.calorieLabel}>Günlük Kalori</Text>
+                  <Text style={styles.calorieLabel}>{t.home.dailyCalories}</Text>
                   <View style={styles.calorieValues}>
                     <Text style={styles.calorieValue}>{todayCalories}</Text>
                     <Text style={styles.calorieGoalText}>/ {calorieGoal}</Text>
@@ -196,9 +231,9 @@ export default function HomeScreen() {
                     <Text style={styles.challengeIcon}>🎯</Text>
                   </View>
                   <View style={styles.challengeInfo}>
-                    <Text style={styles.challengeTitle}>Günlük Meydan Okuma</Text>
+                    <Text style={styles.challengeTitle}>{t.home.dailyChallenge}</Text>
                     <Text style={styles.challengeDesc} numberOfLines={1}>
-                      {todayChallenge.description || 'Hedefini tamamla!'}
+                      {todayChallenge.description || t.home.completeGoal}
                     </Text>
                   </View>
                 </View>
@@ -222,7 +257,7 @@ export default function HomeScreen() {
                   <Text style={styles.macroEmoji}>🍗</Text>
                 </View>
                 <Text style={styles.macroValue}>{todayStats.protein.toFixed(0)}g</Text>
-                <Text style={styles.macroLabel}>Protein</Text>
+                <Text style={styles.macroLabel}>{t.home.protein}</Text>
               </View>
 
               <View style={styles.macroCard}>
@@ -230,7 +265,7 @@ export default function HomeScreen() {
                   <Text style={styles.macroEmoji}>🍞</Text>
                 </View>
                 <Text style={styles.macroValue}>{todayStats.carbs.toFixed(0)}g</Text>
-                <Text style={styles.macroLabel}>Karb</Text>
+                <Text style={styles.macroLabel}>{t.home.carbs}</Text>
               </View>
 
               <View style={styles.macroCard}>
@@ -238,7 +273,7 @@ export default function HomeScreen() {
                   <Text style={styles.macroEmoji}>🥑</Text>
                 </View>
                 <Text style={styles.macroValue}>{todayStats.fat.toFixed(0)}g</Text>
-                <Text style={styles.macroLabel}>Yağ</Text>
+                <Text style={styles.macroLabel}>{t.home.fat}</Text>
               </View>
             </View>
 
@@ -247,7 +282,7 @@ export default function HomeScreen() {
               {/* Water Card */}
               <TouchableOpacity style={styles.progressCard} onPress={handleWaterIntake} activeOpacity={0.8}>
                 <Text style={styles.progressIcon}>💧</Text>
-                <Text style={styles.progressTitle}>Su</Text>
+                <Text style={styles.progressTitle}>{t.home.water}</Text>
                 <Text style={styles.progressValue}>{waterIntake}/{waterGoal}</Text>
                 <View style={styles.progressBar}>
                   <View style={[styles.progressBarFill, styles.waterFill, { width: `${waterProgress}%` }]} />
@@ -258,7 +293,7 @@ export default function HomeScreen() {
               {todayChallenge ? (
                 <TouchableOpacity style={styles.progressCard} onPress={() => router.push('/games')} activeOpacity={0.8}>
                   <Text style={styles.progressIcon}>🎯</Text>
-                  <Text style={styles.progressTitle}>Meydan Okuma</Text>
+                  <Text style={styles.progressTitle}>{t.home.challenge}</Text>
                   <Text style={styles.progressValue}>
                     {todayChallenge.current_progress || 0}/{todayChallenge.target_progress || 0}
                   </Text>
@@ -271,7 +306,7 @@ export default function HomeScreen() {
               ) : (
                 <TouchableOpacity style={styles.progressCard} onPress={() => router.push('/games')} activeOpacity={0.8}>
                   <Text style={styles.progressIcon}>⭐</Text>
-                  <Text style={styles.progressTitle}>XP</Text>
+                  <Text style={styles.progressTitle}>{t.home.xp}</Text>
                   <Text style={styles.progressValue}>{userXP.totalXP}</Text>
                   <View style={styles.progressBar}>
                     <View style={[styles.progressBarFill, styles.xpFill, { width: '100%' }]} />
@@ -287,7 +322,7 @@ export default function HomeScreen() {
                 onPress={() => router.push('/(tabs)/camera')}
               >
                 <Ionicons name="camera" size={24} color="white" />
-                <Text style={styles.actionBtnText}>Yemek Ekle</Text>
+                <Text style={styles.actionBtnText}>{t.home.addMeal}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -295,7 +330,7 @@ export default function HomeScreen() {
                 onPress={() => router.push('/nutrition-expert')}
               >
                 <Ionicons name="fitness" size={24} color="white" />
-                <Text style={styles.actionBtnText}>Beslenme Uzmanı</Text>
+                <Text style={styles.actionBtnText}>{t.home.nutritionExpert}</Text>
               </TouchableOpacity>
             </View>
 
@@ -303,17 +338,17 @@ export default function HomeScreen() {
             <View style={styles.secondaryActions}>
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push('/(tabs)/diets')}>
                 <Ionicons name="restaurant" size={20} color="white" />
-                <Text style={styles.secondaryBtnText}>Diyet Planı</Text>
+                <Text style={styles.secondaryBtnText}>{t.home.dietPlan}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push('/games')}>
                 <Ionicons name="trophy" size={20} color="white" />
-                <Text style={styles.secondaryBtnText}>Ödüller</Text>
+                <Text style={styles.secondaryBtnText}>{t.home.rewards}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.secondaryBtn} onPress={() => router.push('/(tabs)/history')}>
                 <Ionicons name="bar-chart" size={20} color="white" />
-                <Text style={styles.secondaryBtnText}>İstatistikler</Text>
+                <Text style={styles.secondaryBtnText}>{t.home.statistics}</Text>
               </TouchableOpacity>
             </View>
 
@@ -388,6 +423,49 @@ const styles = StyleSheet.create({
   headerRight: {
     flexDirection: 'row',
     gap: 8,
+    position: 'relative',
+  },
+  languageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  languageText: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  languageMenu: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 12,
+    padding: 8,
+    minWidth: 140,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    zIndex: 1000,
+  },
+  languageOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  languageOptionActive: {
+    backgroundColor: 'rgba(99, 102, 241, 0.2)',
+  },
+  languageOptionText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
   xpBadge: {
     flexDirection: 'row',

@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 type TabBarIconProps = {
   color: string;
@@ -45,6 +46,7 @@ const CameraTabIcon = ({ color, size, focused }: TabBarIconProps) => {
 
 export default function TabLayout() {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   // Theme aware colors
   const isDark = theme.name === 'Gece Teması';
@@ -93,7 +95,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Anasayfa',
+          title: t.tabs.home,
           tabBarIcon: ({ color, size, focused }: TabBarIconProps) => (
             <CustomTabBarIcon name="home" color={color} size={size} focused={focused} />
           ),
@@ -102,7 +104,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="stories"
         options={{
-          title: 'Hikayeler',
+          title: t.tabs.stories,
           tabBarIcon: ({ color, size, focused }: TabBarIconProps) => (
             <CustomTabBarIcon name="book" color={color} size={size} focused={focused} />
           ),
@@ -111,7 +113,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="water"
         options={{
-          title: 'Su',
+          title: t.tabs.water,
           tabBarIcon: ({ color, size, focused }: TabBarIconProps) => (
             <CustomTabBarIcon name="water" color={color} size={size} focused={focused} />
           ),
@@ -130,14 +132,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="games"
         options={{
-          title: 'Oyunlar',
+          title: t.tabs.games,
           tabBarIcon: ({ color }) => <Ionicons name="game-controller" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="diets"
         options={{
-          title: 'Diyetler',
+          title: t.tabs.diets,
           tabBarIcon: ({ color, size, focused }: TabBarIconProps) => (
             <CustomTabBarIcon name="nutrition" color={color} size={size} focused={focused} />
           ),
@@ -146,7 +148,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profil',
+          title: t.tabs.profile,
           tabBarIcon: ({ color, size, focused }: TabBarIconProps) => (
             <CustomTabBarIcon name="person" color={color} size={size} focused={focused} />
           ),
