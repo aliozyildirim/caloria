@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import ApiService from '../../lib/api';
 import { useTheme } from '../../lib/ThemeProvider';
 
@@ -227,7 +228,11 @@ export default function DietsScreen() {
           >
             {/* Active Diet Plan */}
             {activeDietPlan && (
-              <View style={styles.activeDietCard}>
+              <TouchableOpacity 
+                style={styles.activeDietCard}
+                onPress={() => router.push('/meal-plan')}
+                activeOpacity={0.8}
+              >
                 <LinearGradient
                   colors={['#4CAF50', '#45a049']}
                   style={styles.activeDietGradient}
@@ -255,8 +260,13 @@ export default function DietsScreen() {
                       <Text style={styles.dietStatLabel}>Günlük Kcal</Text>
                     </View>
                   </View>
+                  
+                  <View style={styles.viewMealPlanButton}>
+                    <Text style={styles.viewMealPlanText}>Günlük Yemek Planını Gör</Text>
+                    <Ionicons name="arrow-forward" size={20} color="white" />
+                  </View>
                 </LinearGradient>
-              </View>
+              </TouchableOpacity>
             )}
 
             {/* Medical Disclaimer */}
@@ -495,6 +505,7 @@ const styles = StyleSheet.create({
   activeDietStats: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    marginBottom: 15,
   },
   dietStatItem: {
     alignItems: 'center',
@@ -508,6 +519,22 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 2,
+  },
+  viewMealPlanButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 5,
+  },
+  viewMealPlanText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginRight: 8,
   },
   disclaimerCard: {
     margin: 20,

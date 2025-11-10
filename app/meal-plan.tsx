@@ -174,6 +174,21 @@ export default function MealPlanScreen() {
   };
 
   const handleCompleteMeal = async (mealPlan: MealPlan) => {
+    // Check if meal date is in the future
+    const mealDate = new Date(mealPlan.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    mealDate.setHours(0, 0, 0, 0);
+    
+    if (mealDate > today) {
+      Alert.alert(
+        'Gelecek Tarih',
+        'Gelecek günlerin öğünlerini şimdiden tamamlayamazsınız. Lütfen öğün gününü bekleyin.',
+        [{ text: 'Tamam', style: 'default' }]
+      );
+      return;
+    }
+    
     Alert.alert(
       'Öğünü Tamamla',
       `"${mealPlan.planned_food_name}" öğününüz tamamlandı mı?`,
@@ -431,14 +446,34 @@ export default function MealPlanScreen() {
             {/* Selected Day Meals */}
             {selectedDayMeals.length > 0 && (
               <View style={styles.selectedDayContainer}>
-                {selectedDayMeals.filter(meal => meal && meal.id).map((mealRaw) => {
+                {selectedDayMeals
+                  .filter(meal => meal && meal.id)
+                  // Remove duplicates based on meal_type
+                  .filter((meal, index, self) => 
+                    index === self.findIndex((m) => m.meal_type === meal.meal_type)
+                  )
+                  .map((mealRaw) => {
                   try {
                     const meal = safeMealData(mealRaw);
+                    
+                    // Check if meal is in the future
+                    const mealDate = new Date(selectedDate);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    mealDate.setHours(0, 0, 0, 0);
+                    const isFuture = mealDate > today;
+                    
                     return (
                       <TouchableOpacity
                         key={`meal-${meal.id}-${selectedDate}`}
-                        style={[styles.mealCard, meal.is_completed && styles.completedMealCard]}
+                        style={[
+                          styles.mealCard, 
+                          meal.is_completed && styles.completedMealCard,
+                          isFuture && styles.futureMealCard
+                        ]}
                         onPress={() => handleCompleteMeal(mealRaw)}
+                        disabled={isFuture}
+                        activeOpacity={isFuture ? 1 : 0.7}
                       >
                         <LinearGradient
                           colors={meal.is_completed 
@@ -647,6 +682,10 @@ const styles = StyleSheet.create({
   completedMealCard: {
     borderColor: '#4CAF50',
     borderWidth: 2,
+  },
+  futureMealCard: {
+    opacity: 0.5,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   mealCardGradient: {
     padding: 20,

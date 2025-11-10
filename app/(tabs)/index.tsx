@@ -40,6 +40,7 @@ export default function HomeScreen() {
     totalCarbs: 0,
     totalFat: 0
   });
+  const [activeDietPlan, setActiveDietPlan] = useState<any>(null);
 
   const { theme } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -79,14 +80,15 @@ export default function HomeScreen() {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const [mealsData, profileData, challengeData, userRewardsData, xpData, waterData, nutritionistAccess] = await Promise.all([
+      const [mealsData, profileData, challengeData, userRewardsData, xpData, waterData, nutritionistAccess, activeDiet] = await Promise.all([
         ApiService.getMeals(today).catch(() => []),
         ApiService.getUserProfile().catch(() => null),
         ApiService.getActiveChallenge().catch(() => null),
         ApiService.getUserRewards().catch(() => []),
         ApiService.getUserXP().catch(() => ({ totalXP: 0, level: 1 })),
         ApiService.getTodayWaterIntake().catch(() => ({ glasses_count: 0, goal_glasses: 8 })),
-        ApiService.checkNutritionistAccess().catch(() => ({ hasAccess: false }))
+        ApiService.checkNutritionistAccess().catch(() => ({ hasAccess: false })),
+        ApiService.getActiveDietPlan().catch(() => null)
       ]);
 
       // Calculate today's stats
@@ -110,6 +112,7 @@ export default function HomeScreen() {
       setWaterIntake(waterData.glasses_count || 0);
       setWaterGoal(waterData.goal_glasses || 8);
       setHasNutritionExpert(nutritionistAccess.hasAccess);
+      setActiveDietPlan(activeDiet);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -417,23 +420,87 @@ export default function HomeScreen() {
             <Animated.View style={[styles.plansContainer, { opacity: fadeAnim }]}>
               <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📋 Aktif Planlar</Text>
               
-              <TouchableOpacity 
-                style={[styles.planCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}
-                onPress={() => router.push('/(tabs)/diets')}
-              >
-                <View style={styles.planContent}>
-                  <Text style={[styles.planIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🥗</Text>
-                  <View style={styles.planInfo}>
-                    <Text style={[styles.planTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
-                      Diyet Planı
-                    </Text>
-                    <Text style={[styles.planDesc, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
-                      Günlük beslenme planınızı görüntüleyin
-                    </Text>
+              {/* Active Diet Plan Card */}
+              {activeDietPlan ? (
+                <TouchableOpacity 
+                  style={[styles.activeDietCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(76, 175, 80, 0.2)' : theme.cardColor + '40' }]}
+                  onPress={() => router.push('/meal-plan')}
+                >
+                  <LinearGradient
+                    colors={['rgba(76, 175, 80, 0.3)', 'rgba(76, 175, 80, 0.1)']}
+                    style={styles.activeDietGradient}
+                  >
+                    <View style={styles.activeDietHeader}>
+                      <View style={styles.activeDietTitleRow}>
+                        <Text style={[styles.activeDietEmoji]}>🥗</Text>
+                        <View style={styles.activeDietTitleContainer}>
+                          <Text style={[styles.activeDietLabel, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
+                            Aktif Diyet Planı
+                          </Text>
+                          <Text style={[styles.activeDietName, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                            {activeDietPlan.diet_plan?.name || activeDietPlan.name || 'Diyet Planı'}
+                          </Text>
+                        </View>
+                      </View>
+                      <Ionicons name="chevron-forward" size={24} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
+                    </View>
+                    
+                    <View style={styles.activeDietStats}>
+                      <View style={styles.activeDietStatItem}>
+                        <Text style={[styles.activeDietStatValue, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                          {Math.floor((new Date().getTime() - new Date(activeDietPlan.start_date).getTime()) / (1000 * 60 * 60 * 24))}
+                        </Text>
+                        <Text style={[styles.activeDietStatLabel, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : theme.textColor + '99' }]}>
+                          Gün Geçti
+                        </Text>
+                      </View>
+                      <View style={styles.activeDietStatDivider} />
+                      <View style={styles.activeDietStatItem}>
+                        <Text style={[styles.activeDietStatValue, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                          {Math.max(0, Math.floor((new Date(activeDietPlan.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))}
+                        </Text>
+                        <Text style={[styles.activeDietStatLabel, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : theme.textColor + '99' }]}>
+                          Gün Kaldı
+                        </Text>
+                      </View>
+                      <View style={styles.activeDietStatDivider} />
+                      <View style={styles.activeDietStatItem}>
+                        <Text style={[styles.activeDietStatValue, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                          {activeDietPlan.diet_plan?.daily_calories || activeDietPlan.daily_calories || 0}
+                        </Text>
+                        <Text style={[styles.activeDietStatLabel, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : theme.textColor + '99' }]}>
+                          Günlük Kcal
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.activeDietFooter}>
+                      <Text style={[styles.activeDietFooterText, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.9)' : theme.textColor }]}>
+                        Günlük yemek planını görüntüle
+                      </Text>
+                      <Ionicons name="arrow-forward" size={16} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
+                    </View>
+                  </LinearGradient>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity 
+                  style={[styles.planCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}
+                  onPress={() => router.push('/(tabs)/diets')}
+                >
+                  <View style={styles.planContent}>
+                    <Text style={[styles.planIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🥗</Text>
+                    <View style={styles.planInfo}>
+                      <Text style={[styles.planTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                        Diyet Planı
+                      </Text>
+                      <Text style={[styles.planDesc, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
+                        Bir diyet planı seçin
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
                   </View>
-                  <Ionicons name="chevron-forward" size={24} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity 
                 style={[styles.planCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}
@@ -863,6 +930,81 @@ const styles = StyleSheet.create({
   },
   planDesc: {
     fontSize: 13,
+  },
+  activeDietCard: {
+    borderRadius: 20,
+    marginBottom: 15,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'rgba(76, 175, 80, 0.3)',
+  },
+  activeDietGradient: {
+    padding: 20,
+  },
+  activeDietHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  activeDietTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  activeDietEmoji: {
+    fontSize: 32,
+    marginRight: 12,
+  },
+  activeDietTitleContainer: {
+    flex: 1,
+  },
+  activeDietLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  activeDietName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  activeDietStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingVertical: 15,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  activeDietStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  activeDietStatValue: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  activeDietStatLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  activeDietStatDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  activeDietFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 8,
+  },
+  activeDietFooterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginRight: 6,
   },
   rewardsContainer: {
     marginTop: 20,
