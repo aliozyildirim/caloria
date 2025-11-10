@@ -95,20 +95,24 @@ export default function NutritionExpertScreen() {
                     <Text style={styles.sectionTitle}>📊 Günlük Özet</Text>
                     <View style={styles.overviewGrid}>
                       <View style={styles.overviewItem}>
-                        <Text style={styles.overviewValue}>{dailyAdvice.overview.calorieStatus}%</Text>
+                        <Text style={styles.overviewValue}>{Math.round(dailyAdvice.overview.calorieStatus)}%</Text>
                         <Text style={styles.overviewLabel}>Kalori</Text>
+                        <View style={[styles.miniBar, { width: `${Math.min(dailyAdvice.overview.calorieStatus, 100)}%` }]} />
                       </View>
                       <View style={styles.overviewItem}>
-                        <Text style={styles.overviewValue}>{dailyAdvice.overview.proteinStatus}%</Text>
+                        <Text style={styles.overviewValue}>{Math.round(dailyAdvice.overview.proteinStatus)}%</Text>
                         <Text style={styles.overviewLabel}>Protein</Text>
+                        <View style={[styles.miniBar, { width: `${Math.min(dailyAdvice.overview.proteinStatus, 100)}%` }]} />
                       </View>
                       <View style={styles.overviewItem}>
-                        <Text style={styles.overviewValue}>{dailyAdvice.overview.carbsStatus}%</Text>
+                        <Text style={styles.overviewValue}>{Math.round(dailyAdvice.overview.carbsStatus)}%</Text>
                         <Text style={styles.overviewLabel}>Karb</Text>
+                        <View style={[styles.miniBar, { width: `${Math.min(dailyAdvice.overview.carbsStatus, 100)}%` }]} />
                       </View>
                       <View style={styles.overviewItem}>
-                        <Text style={styles.overviewValue}>{dailyAdvice.overview.fatStatus}%</Text>
+                        <Text style={styles.overviewValue}>{Math.round(dailyAdvice.overview.fatStatus)}%</Text>
                         <Text style={styles.overviewLabel}>Yağ</Text>
+                        <View style={[styles.miniBar, { width: `${Math.min(dailyAdvice.overview.fatStatus, 100)}%` }]} />
                       </View>
                     </View>
                   </View>
