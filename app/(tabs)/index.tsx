@@ -163,7 +163,7 @@ export default function HomeScreen() {
               </View>
             </View>
 
-            {/* Main Calorie Card */}
+            {/* Main Calorie Card - Compact */}
             <View style={styles.mainCalorieCard}>
               <View style={styles.calorieContent}>
                 <View style={styles.calorieLeft}>
@@ -183,6 +183,37 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
+
+            {/* Daily Challenge Card */}
+            {todayChallenge && (
+              <TouchableOpacity 
+                style={styles.challengeCard}
+                onPress={() => router.push('/games')}
+                activeOpacity={0.9}
+              >
+                <View style={styles.challengeLeft}>
+                  <View style={styles.challengeIconContainer}>
+                    <Text style={styles.challengeIcon}>🎯</Text>
+                  </View>
+                  <View style={styles.challengeInfo}>
+                    <Text style={styles.challengeTitle}>Günlük Meydan Okuma</Text>
+                    <Text style={styles.challengeDesc} numberOfLines={1}>
+                      {todayChallenge.description || 'Hedefini tamamla!'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.challengeRight}>
+                  <Text style={styles.challengeProgress}>
+                    {todayChallenge.current_progress || 0}/{todayChallenge.target_progress || 0}
+                  </Text>
+                  <View style={styles.challengeProgressBar}>
+                    <View style={[styles.challengeProgressFill, { 
+                      width: `${Math.min((todayChallenge.current_progress / todayChallenge.target_progress) * 100, 100)}%` 
+                    }]} />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            )}
 
             {/* Macro Stats */}
             <View style={styles.macroRow}>
@@ -286,7 +317,7 @@ export default function HomeScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: 120 }} />
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
@@ -385,10 +416,10 @@ const styles = StyleSheet.create({
   },
   mainCalorieCard: {
     marginHorizontal: 24,
-    marginBottom: 24,
+    marginBottom: 16,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 20,
+    padding: 20,
   },
   calorieContent: {
     flexDirection: 'row',
@@ -400,53 +431,115 @@ const styles = StyleSheet.create({
   },
   calorieLabel: {
     color: 'rgba(255,255,255,0.9)',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   calorieValues: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   calorieValue: {
     color: 'white',
-    fontSize: 48,
+    fontSize: 36,
     fontWeight: 'bold',
   },
   calorieGoalText: {
     color: 'rgba(255,255,255,0.7)',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 6,
   },
   calorieBar: {
-    height: 12,
+    height: 8,
     backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 6,
+    borderRadius: 4,
     overflow: 'hidden',
   },
   calorieBarFill: {
     height: '100%',
     backgroundColor: 'white',
-    borderRadius: 6,
+    borderRadius: 4,
   },
   calorieRight: {
-    marginLeft: 20,
+    marginLeft: 16,
   },
   percentCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: 'rgba(255,255,255,0.25)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: 'white',
+  },
+  challengeCard: {
+    marginHorizontal: 24,
+    marginBottom: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  challengeLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  challengeIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  challengeIcon: {
+    fontSize: 24,
+  },
+  challengeInfo: {
+    flex: 1,
+  },
+  challengeTitle: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 2,
+  },
+  challengeDesc: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+  },
+  challengeRight: {
+    alignItems: 'flex-end',
+    marginLeft: 12,
+  },
+  challengeProgress: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 6,
+  },
+  challengeProgressBar: {
+    width: 60,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  challengeProgressFill: {
+    height: '100%',
+    backgroundColor: '#10b981',
+    borderRadius: 2,
   },
   percentValue: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   macroRow: {
