@@ -308,11 +308,17 @@ export default function AuthScreen() {
                   <Ionicons name="mail" size={20} color="#666" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="Email"
+                    placeholder="E-posta"
                     value={registerEmail}
                     onChangeText={setRegisterEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    autoComplete="email"
+                    // autoCompleteType="email"
+                    // autoCompleteOptions={{
+                    //   email: true,
+                    //   password: false
+                    // }}
                   />
                 </View>
 

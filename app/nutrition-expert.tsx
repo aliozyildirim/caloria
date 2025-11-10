@@ -1,21 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Dimensions,
-  Animated,
-  RefreshControl,
-  Alert,
-} from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Dimensions, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import ApiService from '../lib/api';
 import { useTheme } from '../lib/ThemeProvider';
+import ApiService from '../lib/api';
+import NutritionChatScreen from './nutrition-chat';
+import { Animated } from 'react-native';
+import { Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
@@ -83,7 +76,7 @@ export default function NutritionExpertScreen() {
   const [analysis, setAnalysis] = useState<NutritionAnalysis | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'advice' | 'analysis' | 'plan'>('advice');
+  const [activeTab, setActiveTab] = useState<'advice' | 'analysis' | 'plan' | 'chat'>('advice');
 
   const { theme } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -131,263 +124,217 @@ export default function NutritionExpertScreen() {
     setRefreshing(false);
   };
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return '#4CAF50';
-    if (score >= 60) return '#FFA726';
-    return '#FF6B6B';
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return '#FF6B6B';
-      case 'medium': return '#FFA726';
-      case 'low': return '#4CAF50';
-      default: return '#666';
-    }
-  };
-
-  const handleWeeklyPlan = async () => {
-    try {
-      const weeklyPlan = await ApiService.getWeeklyNutritionPlan();
-      Alert.alert(
-        '🗓️ Haftalık Plan',
-        `Haftalık beslenme planınız hazır!\n\n📊 Hedefler:\n• ${weeklyPlan.weeklyGoals?.totalCalories || 0} kalori\n• ${weeklyPlan.weeklyGoals?.totalProtein || 0}g protein\n• ${weeklyPlan.weeklyGoals?.workouts || 0} antrenman`,
-        [
-          { text: 'Tamam', style: 'default' }
-        ]
+  const renderAdviceTab = () => {
+    if (!dailyAdvice) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>Günlük beslenme önerisi bulunamadı.</Text>
+        </View>
       );
-    } catch (error) {
-      Alert.alert('Hata', 'Haftalık plan yüklenirken bir hata oluştu');
     }
-  };
 
-  const renderAdviceTab = () => (
-    <View style={styles.tabContent}>
-      {/* Daily Score */}
-      <View style={[styles.scoreCard, { backgroundColor: theme.cardColor }]}>
-        <LinearGradient
-          colors={[getScoreColor(dailyAdvice?.score || 0), `${getScoreColor(dailyAdvice?.score || 0)}AA`]}
-          style={styles.scoreGradient}
-        >
-          <Text style={styles.scoreValue}>{dailyAdvice?.score || 0}</Text>
-          <Text style={styles.scoreLabel}>Günlük Beslenme Skoru</Text>
-        </LinearGradient>
-      </View>
-
-      {/* Overview */}
-      <View style={[styles.overviewCard, { backgroundColor: theme.cardColor }]}>
-        <Text style={[styles.cardTitle, { color: theme.textColor }]}>📊 Günlük Durum</Text>
-        <View style={styles.overviewGrid}>
+    return (
+      <View style={styles.adviceContainer}>
+        <View style={styles.overview}>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewEmoji}>🔥</Text>
-            <Text style={[styles.overviewValue, { color: theme.textColor }]}>
-              {Math.round(dailyAdvice?.overview?.calorieStatus || 0)}%
-            </Text>
-            <Text style={[styles.overviewLabel, { color: theme.textColor }]}>Kalori</Text>
+            <Text style={styles.overviewTitle}>Kalori Durumu</Text>
+            <Text style={styles.overviewValue}>{dailyAdvice.overview.calorieStatus}%</Text>
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewEmoji}>💪</Text>
-            <Text style={[styles.overviewValue, { color: theme.textColor }]}>
-              {Math.round(dailyAdvice?.overview?.proteinStatus || 0)}%
-            </Text>
-            <Text style={[styles.overviewLabel, { color: theme.textColor }]}>Protein</Text>
+            <Text style={styles.overviewTitle}>Protein Durumu</Text>
+            <Text style={styles.overviewValue}>{dailyAdvice.overview.proteinStatus}%</Text>
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewEmoji}>🌾</Text>
-            <Text style={[styles.overviewValue, { color: theme.textColor }]}>
-              {Math.round(dailyAdvice?.overview?.carbsStatus || 0)}%
-            </Text>
-            <Text style={[styles.overviewLabel, { color: theme.textColor }]}>Karbonhidrat</Text>
+            <Text style={styles.overviewTitle}>Karbonhidrat Durumu</Text>
+            <Text style={styles.overviewValue}>{dailyAdvice.overview.carbsStatus}%</Text>
           </View>
           <View style={styles.overviewItem}>
-            <Text style={styles.overviewEmoji}>🥑</Text>
-            <Text style={[styles.overviewValue, { color: theme.textColor }]}>
-              {Math.round(dailyAdvice?.overview?.fatStatus || 0)}%
-            </Text>
-            <Text style={[styles.overviewLabel, { color: theme.textColor }]}>Yağ</Text>
+            <Text style={styles.overviewTitle}>Yağ Durumu</Text>
+            <Text style={styles.overviewValue}>{dailyAdvice.overview.fatStatus}%</Text>
+          </View>
+          <View style={styles.overviewItem}>
+            <Text style={styles.overviewTitle}>Bugünkü Yemek Sayısı</Text>
+            <Text style={styles.overviewValue}>{dailyAdvice.overview.mealsToday}</Text>
           </View>
         </View>
-      </View>
 
-      {/* Recommendations */}
-      {dailyAdvice?.recommendations && dailyAdvice.recommendations.length > 0 && (
-        <View style={[styles.recommendationsCard, { backgroundColor: theme.cardColor }]}>
-          <Text style={[styles.cardTitle, { color: theme.textColor }]}>💡 Öneriler</Text>
-          {dailyAdvice.recommendations.map((rec, index) => (
+        <View style={styles.recommendations}>
+          <Text style={styles.sectionTitle}>Öneriler</Text>
+          {dailyAdvice.recommendations.map((item, index) => (
             <View key={index} style={styles.recommendationItem}>
-              <View style={styles.recommendationHeader}>
-                <Text style={styles.recommendationIcon}>{rec.icon}</Text>
-                <Text style={[styles.recommendationTitle, { color: theme.textColor }]}>
-                  {rec.title}
-                </Text>
-                <View style={[styles.priorityBadge, { backgroundColor: getPriorityColor(rec.priority) }]}>
-                  <Text style={styles.priorityText}>{rec.priority.toUpperCase()}</Text>
-                </View>
+              <View style={styles.recommendationIcon}>
+                <Ionicons name={item.icon as any} size={24} color={theme.accentColor} />
               </View>
-              <Text style={[styles.recommendationMessage, { color: theme.textColor }]}>
-                {rec.message}
-              </Text>
+              <View style={styles.recommendationContent}>
+                <Text style={styles.recommendationTitle}>{item.title}</Text>
+                <Text style={styles.recommendationMessage}>{item.message}</Text>
+                <Text style={styles.recommendationPriority}>{item.priority}</Text>
+              </View>
             </View>
           ))}
         </View>
-      )}
 
-      {/* Warnings */}
-      {dailyAdvice?.warnings && dailyAdvice.warnings.length > 0 && (
-        <View style={[styles.warningsCard, { backgroundColor: theme.cardColor }]}>
-          <Text style={[styles.cardTitle, { color: theme.textColor }]}>⚠️ Uyarılar</Text>
-          {dailyAdvice.warnings.map((warning, index) => (
+        <View style={styles.warnings}>
+          <Text style={styles.sectionTitle}>Uyarılar</Text>
+          {dailyAdvice.warnings.map((item, index) => (
             <View key={index} style={styles.warningItem}>
-              <Text style={styles.warningIcon}>{warning.icon}</Text>
+              <View style={styles.warningIcon}>
+                <Ionicons name={item.icon as any} size={24} color={theme.warningColor} />
+              </View>
               <View style={styles.warningContent}>
-                <Text style={[styles.warningTitle, { color: theme.textColor }]}>
-                  {warning.title}
-                </Text>
-                <Text style={[styles.warningMessage, { color: theme.textColor }]}>
-                  {warning.message}
-                </Text>
+                <Text style={styles.warningTitle}>{item.title}</Text>
+                <Text style={styles.warningMessage}>{item.message}</Text>
+                <Text style={styles.warningPriority}>{item.priority}</Text>
               </View>
             </View>
           ))}
         </View>
-      )}
 
-      {/* Tips */}
-      {dailyAdvice?.tips && dailyAdvice.tips.length > 0 && (
-        <View style={[styles.tipsCard, { backgroundColor: theme.cardColor }]}>
-          <Text style={[styles.cardTitle, { color: theme.textColor }]}>🎯 Günlük İpuçları</Text>
+        <View style={styles.tips}>
+          <Text style={styles.sectionTitle}>İpuçları</Text>
           {dailyAdvice.tips.map((tip, index) => (
             <View key={index} style={styles.tipItem}>
-              <Text style={[styles.tipText, { color: theme.textColor }]}>{tip}</Text>
+              <Ionicons name="bulb-outline" size={24} color={theme.accentColor} />
+              <Text style={styles.tipText}>{tip}</Text>
             </View>
           ))}
         </View>
-      )}
-    </View>
-  );
-
-  const renderAnalysisTab = () => (
-    <View style={styles.tabContent}>
-      {/* Summary */}
-      <View style={[styles.summaryCard, { backgroundColor: theme.cardColor }]}>
-        <Text style={[styles.cardTitle, { color: theme.textColor }]}>📈 Son 7 Gün Özeti</Text>
-        <View style={styles.summaryGrid}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: theme.textColor }]}>
-              {analysis?.summary?.avgDailyCalories || 0}
-            </Text>
-            <Text style={[styles.summaryLabel, { color: theme.textColor }]}>Ortalama Kalori</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: theme.textColor }]}>
-              {analysis?.summary?.avgDailyProtein || 0}g
-            </Text>
-            <Text style={[styles.summaryLabel, { color: theme.textColor }]}>Ortalama Protein</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: theme.textColor }]}>
-              {analysis?.summary?.totalMeals || 0}
-            </Text>
-            <Text style={[styles.summaryLabel, { color: theme.textColor }]}>Toplam Öğün</Text>
-          </View>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: theme.textColor }]}>
-              {analysis?.trends?.consistencyScore || 0}%
-            </Text>
-            <Text style={[styles.summaryLabel, { color: theme.textColor }]}>Tutarlılık</Text>
-          </View>
-        </View>
       </View>
+    );
+  };
 
-      {/* Vitamins & Minerals */}
-      <View style={[styles.vitaminsCard, { backgroundColor: theme.cardColor }]}>
-        <Text style={[styles.cardTitle, { color: theme.textColor }]}>🧪 Vitamin & Mineral Analizi</Text>
-        
-        <Text style={[styles.sectionSubtitle, { color: theme.textColor }]}>Vitaminler</Text>
-        <View style={styles.nutrientGrid}>
-          <View style={styles.nutrientItem}>
-            <Text style={[styles.nutrientName, { color: theme.textColor }]}>Vitamin C</Text>
-            <View style={styles.nutrientBar}>
-              <View style={[styles.nutrientFill, { width: `${analysis?.vitamins?.vitaminC || 0}%`, backgroundColor: '#FF6B6B' }]} />
-            </View>
-            <Text style={[styles.nutrientValue, { color: theme.textColor }]}>{analysis?.vitamins?.vitaminC || 0}%</Text>
+  const renderAnalysisTab = () => {
+    if (!analysis) {
+      return (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>Beslenme analizi bulunamadı.</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.analysisContainer}>
+        <View style={styles.summary}>
+          <Text style={styles.sectionTitle}>Özet</Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Ortalama Günlük Kalori</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.avgDailyCalories.toFixed(0)}</Text>
           </View>
-          <View style={styles.nutrientItem}>
-            <Text style={[styles.nutrientName, { color: theme.textColor }]}>Vitamin D</Text>
-            <View style={styles.nutrientBar}>
-              <View style={[styles.nutrientFill, { width: `${analysis?.vitamins?.vitaminD || 0}%`, backgroundColor: '#FFA726' }]} />
-            </View>
-            <Text style={[styles.nutrientValue, { color: theme.textColor }]}>{analysis?.vitamins?.vitaminD || 0}%</Text>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Ortalama Günlük Protein</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.avgDailyProtein.toFixed(0)}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Ortalama Günlük Karbonhidrat</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.avgDailyCarbs.toFixed(0)}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Ortalama Günlük Yağ</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.avgDailyFat.toFixed(0)}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Toplam Yemek Sayısı</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.totalMeals}</Text>
+          </View>
+          <View style={styles.summaryItem}>
+            <Text style={styles.summaryLabel}>Analiz Süresi</Text>
+            <Text style={styles.summaryValue}>{analysis.summary.daysAnalyzed} Gün</Text>
           </View>
         </View>
 
-        <Text style={[styles.sectionSubtitle, { color: theme.textColor }]}>Mineraller</Text>
-        <View style={styles.nutrientGrid}>
-          <View style={styles.nutrientItem}>
-            <Text style={[styles.nutrientName, { color: theme.textColor }]}>Demir</Text>
-            <View style={styles.nutrientBar}>
-              <View style={[styles.nutrientFill, { width: `${analysis?.minerals?.iron || 0}%`, backgroundColor: '#4CAF50' }]} />
-            </View>
-            <Text style={[styles.nutrientValue, { color: theme.textColor }]}>{analysis?.minerals?.iron || 0}%</Text>
+        <View style={styles.trends}>
+          <Text style={styles.sectionTitle}>Trendler</Text>
+          <View style={styles.trendItem}>
+            <Text style={styles.trendLabel}>Kalori Uyum Oranı</Text>
+            <Text style={styles.trendValue}>{analysis.trends.calorieAdherence}%</Text>
           </View>
-          <View style={styles.nutrientItem}>
-            <Text style={[styles.nutrientName, { color: theme.textColor }]}>Kalsiyum</Text>
-            <View style={styles.nutrientBar}>
-              <View style={[styles.nutrientFill, { width: `${analysis?.minerals?.calcium || 0}%`, backgroundColor: '#42A5F5' }]} />
-            </View>
-            <Text style={[styles.nutrientValue, { color: theme.textColor }]}>{analysis?.minerals?.calcium || 0}%</Text>
+          <View style={styles.trendItem}>
+            <Text style={styles.trendLabel}>Protein Uyum Oranı</Text>
+            <Text style={styles.trendValue}>{analysis.trends.proteinAdherence}%</Text>
+          </View>
+          <View style={styles.trendItem}>
+            <Text style={styles.trendLabel}>Tutarlılık Puanı</Text>
+            <Text style={styles.trendValue}>{analysis.trends.consistencyScore.toFixed(0)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.vitamins}>
+          <Text style={styles.sectionTitle}>Vitaminler</Text>
+          <View style={styles.vitaminItem}>
+            <Text style={styles.vitaminLabel}>Vitamin C</Text>
+            <Text style={styles.vitaminValue}>{analysis.vitamins.vitaminC.toFixed(0)}</Text>
+          </View>
+          <View style={styles.vitaminItem}>
+            <Text style={styles.vitaminLabel}>Vitamin D</Text>
+            <Text style={styles.vitaminValue}>{analysis.vitamins.vitaminD.toFixed(0)}</Text>
+          </View>
+          <View style={styles.vitaminItem}>
+            <Text style={styles.vitaminLabel}>Vitamin B12</Text>
+            <Text style={styles.vitaminValue}>{analysis.vitamins.vitaminB12.toFixed(0)}</Text>
+          </View>
+          <View style={styles.vitaminItem}>
+            <Text style={styles.vitaminLabel}>Folat</Text>
+            <Text style={styles.vitaminValue}>{analysis.vitamins.folate.toFixed(0)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.minerals}>
+          <Text style={styles.sectionTitle}>Mineraller</Text>
+          <View style={styles.mineralItem}>
+            <Text style={styles.mineralLabel}>Demir</Text>
+            <Text style={styles.mineralValue}>{analysis.minerals.iron.toFixed(0)}</Text>
+          </View>
+          <View style={styles.mineralItem}>
+            <Text style={styles.mineralLabel}>Kalsiyum</Text>
+            <Text style={styles.mineralValue}>{analysis.minerals.calcium.toFixed(0)}</Text>
+          </View>
+          <View style={styles.mineralItem}>
+            <Text style={styles.mineralLabel}>Magnezyum</Text>
+            <Text style={styles.mineralValue}>{analysis.minerals.magnesium.toFixed(0)}</Text>
+          </View>
+          <View style={styles.mineralItem}>
+            <Text style={styles.mineralLabel}>Zink</Text>
+            <Text style={styles.mineralValue}>{analysis.minerals.zinc.toFixed(0)}</Text>
           </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  };
 
-  const renderPlanTab = () => (
-    <View style={styles.tabContent}>
-      <View style={[styles.planCard, { backgroundColor: theme.cardColor }]}>
-        <Text style={[styles.cardTitle, { color: theme.textColor }]}>🎯 Beslenme Planları</Text>
-        
-        <TouchableOpacity style={styles.planButton} onPress={handleWeeklyPlan}>
-          <LinearGradient
-            colors={['#4CAF50', '#45a049']}
-            style={styles.planGradient}
-          >
-            <Ionicons name="calendar" size={24} color="#fff" />
-            <View style={styles.planContent}>
-              <Text style={styles.planTitle}>Haftalık Plan</Text>
-              <Text style={styles.planSubtitle}>AI ile kişiselleştirilmiş 7 günlük plan</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.planButton} onPress={() => Alert.alert('🔜 Çok Yakında', 'Bu özellik geliştiriliyor!')}>
-          <LinearGradient
-            colors={['#42A5F5', '#1976D2']}
-            style={styles.planGradient}
-          >
-            <Ionicons name="restaurant" size={24} color="#fff" />
-            <View style={styles.planContent}>
-              <Text style={styles.planTitle}>Özel Diyet Planı</Text>
-              <Text style={styles.planSubtitle}>Hedefinize özel beslenme programı</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.planButton} onPress={() => Alert.alert('🔜 Çok Yakında', 'Bu özellik geliştiriliyor!')}>
-          <LinearGradient
-            colors={['#FFA726', '#FF7043']}
-            style={styles.planGradient}
-          >
-            <Ionicons name="fitness" size={24} color="#fff" />
-            <View style={styles.planContent}>
-              <Text style={styles.planTitle}>Antrenman + Beslenme</Text>
-              <Text style={styles.planSubtitle}>Egzersiz programı ile entegre plan</Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
+  const renderPlanTab = () => {
+    return (
+      <View style={styles.planContainer}>
+        <Text style={styles.sectionTitle}>Beslenme Planı</Text>
+        <View style={styles.planItem}>
+          <Ionicons name="restaurant" size={24} color={theme.accentColor} />
+          <View style={styles.planContent}>
+            <Text style={styles.planTitle}>Yemek Seçimi</Text>
+            <Text style={styles.planDescription}>
+              Günlük beslenme planınızı oluşturmak için önerilen yemekleri seçin.
+            </Text>
+          </View>
+        </View>
+        <View style={styles.planItem}>
+          <Ionicons name="fitness" size={24} color={theme.accentColor} />
+          <View style={styles.planContent}>
+            <Text style={styles.planTitle}>Aktivite Seviyesi</Text>
+            <Text style={styles.planDescription}>
+              Günlük aktivite seviyenize göre beslenme planınızı ayarlayın.
+            </Text>
+          </View>
+        </View>
+        <View style={styles.planItem}>
+          <Ionicons name="calendar" size={24} color={theme.accentColor} />
+          <View style={styles.planContent}>
+            <Text style={styles.planTitle}>Takvim</Text>
+            <Text style={styles.planDescription}>
+              Beslenme planınızı takvimde görüntüleyin ve takip edin.
+            </Text>
+          </View>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   if (loading) {
     return (
@@ -456,6 +403,14 @@ export default function NutritionExpertScreen() {
                 🎯 Planlar
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, activeTab === 'chat' && styles.activeTab]}
+              onPress={() => setActiveTab('chat')}
+            >
+              <Text style={[styles.tabText, activeTab === 'chat' && styles.activeTabText]}>
+                💬 Chat
+              </Text>
+            </TouchableOpacity>
           </View>
 
           <Animated.View
@@ -467,14 +422,18 @@ export default function NutritionExpertScreen() {
               },
             ]}
           >
-            <ScrollView
-              refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-              showsVerticalScrollIndicator={false}
-            >
-              {activeTab === 'advice' && renderAdviceTab()}
-              {activeTab === 'analysis' && renderAnalysisTab()}
-              {activeTab === 'plan' && renderPlanTab()}
-            </ScrollView>
+            {activeTab === 'chat' ? (
+              <NutritionChatScreen />
+            ) : (
+              <ScrollView
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                showsVerticalScrollIndicator={false}
+              >
+                {activeTab === 'advice' && renderAdviceTab()}
+                {activeTab === 'analysis' && renderAnalysisTab()}
+                {activeTab === 'plan' && renderPlanTab()}
+              </ScrollView>
+            )}
           </Animated.View>
         </SafeAreaView>
       </LinearGradient>
@@ -496,309 +455,308 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  refreshButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholder: {
-    width: 40,
+    padding: 8,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
+    textAlign: 'center',
+  },
+  refreshButton: {
+    padding: 8,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
   },
   loadingText: {
-    fontSize: 16,
+    fontSize: 18,
     color: 'white',
+    textAlign: 'center',
   },
   tabContainer: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    justifyContent: 'space-around',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 20,
+    marginHorizontal: 20,
+    marginTop: 10,
+    paddingVertical: 5,
   },
   tab: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 20,
-    marginHorizontal: 4,
-    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 15,
   },
   activeTab: {
-    backgroundColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   tabText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 16,
+    fontWeight: '600',
   },
   activeTabText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: 'black',
   },
   content: {
     flex: 1,
-  },
-  tabContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  scoreCard: {
-    borderRadius: 16,
-    marginBottom: 20,
-    overflow: 'hidden',
-  },
-  scoreGradient: {
-    padding: 30,
-    alignItems: 'center',
-  },
-  scoreValue: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 8,
-  },
-  scoreLabel: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '500',
-  },
-  overviewCard: {
-    borderRadius: 16,
     padding: 20,
-    marginBottom: 20,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
+  adviceContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  overviewGrid: {
+  overview: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
+    marginBottom: 20,
   },
   overviewItem: {
     alignItems: 'center',
-    flex: 1,
   },
-  overviewEmoji: {
-    fontSize: 24,
-    marginBottom: 8,
+  overviewTitle: {
+    fontSize: 14,
+    color: 'gray',
+    marginBottom: 5,
   },
   overviewValue: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 4,
+    color: 'black',
   },
-  overviewLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-  },
-  recommendationsCard: {
-    borderRadius: 16,
-    padding: 20,
+  recommendations: {
     marginBottom: 20,
   },
-  recommendationItem: {
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#4CAF50',
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    color: 'black',
   },
-  recommendationHeader: {
+  recommendationItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
   },
   recommendationIcon: {
-    fontSize: 20,
-    marginRight: 8,
+    marginRight: 10,
+  },
+  recommendationContent: {
+    flex: 1,
   },
   recommendationTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  priorityBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  priorityText: {
-    color: 'white',
-    fontSize: 10,
-    fontWeight: 'bold',
+    fontWeight: '600',
+    color: 'black',
   },
   recommendationMessage: {
     fontSize: 14,
-    lineHeight: 20,
-    opacity: 0.8,
+    color: 'gray',
+    marginTop: 2,
   },
-  warningsCard: {
-    borderRadius: 16,
-    padding: 20,
+  recommendationPriority: {
+    fontSize: 12,
+    color: 'white',
+    backgroundColor: '#4CAF50',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 5,
+  },
+  warnings: {
     marginBottom: 20,
   },
   warningItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 16,
-    backgroundColor: 'rgba(255, 107, 107, 0.1)',
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF6B6B',
-    marginBottom: 12,
+    alignItems: 'center',
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#fff3cd',
+    borderRadius: 10,
   },
   warningIcon: {
-    fontSize: 20,
-    marginRight: 12,
+    marginRight: 10,
   },
   warningContent: {
     flex: 1,
   },
   warningTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    fontWeight: '600',
+    color: 'black',
   },
   warningMessage: {
     fontSize: 14,
-    opacity: 0.8,
-    lineHeight: 20,
+    color: 'gray',
+    marginTop: 2,
   },
-  tipsCard: {
-    borderRadius: 16,
-    padding: 20,
+  warningPriority: {
+    fontSize: 12,
+    color: 'white',
+    backgroundColor: '#dc3545',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+    alignSelf: 'flex-start',
+    marginTop: 5,
+  },
+  tips: {
     marginBottom: 20,
   },
   tipItem: {
-    padding: 12,
-    backgroundColor: 'rgba(66, 165, 245, 0.1)',
-    borderRadius: 12,
-    marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#e0f7fa',
+    borderRadius: 10,
   },
   tipText: {
-    fontSize: 14,
-    lineHeight: 20,
+    marginLeft: 10,
+    fontSize: 15,
+    color: 'black',
   },
-  summaryCard: {
-    borderRadius: 16,
+  analysisContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
     padding: 20,
-    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  summaryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+  summary: {
+    marginBottom: 20,
   },
   summaryItem: {
-    width: '48%',
-    alignItems: 'center',
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: 'rgba(103, 126, 234, 0.1)',
-    borderRadius: 12,
-  },
-  summaryValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
   summaryLabel: {
-    fontSize: 12,
-    opacity: 0.7,
-    textAlign: 'center',
-  },
-  vitaminsCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-  },
-  sectionSubtitle: {
     fontSize: 16,
-    fontWeight: '600',
-    marginTop: 16,
-    marginBottom: 12,
+    color: 'gray',
   },
-  nutrientGrid: {
-    marginBottom: 16,
+  summaryValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
   },
-  nutrientItem: {
-    marginBottom: 16,
-  },
-  nutrientName: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  nutrientBar: {
-    height: 8,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 4,
-  },
-  nutrientFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  nutrientValue: {
-    fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'right',
-  },
-  planCard: {
-    borderRadius: 16,
-    padding: 20,
+  trends: {
     marginBottom: 20,
   },
-  planButton: {
-    borderRadius: 16,
-    marginBottom: 16,
-    overflow: 'hidden',
+  trendItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
   },
-  planGradient: {
+  trendLabel: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  trendValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  vitamins: {
+    marginBottom: 20,
+  },
+  vitaminItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  vitaminLabel: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  vitaminValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  minerals: {
+    marginBottom: 20,
+  },
+  mineralItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  mineralLabel: {
+    fontSize: 16,
+    color: 'gray',
+  },
+  mineralValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  planContainer: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  planItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 10,
   },
   planContent: {
-    marginLeft: 16,
-    flex: 1,
+    marginLeft: 10,
   },
   planTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: 'white',
-    marginBottom: 4,
+    fontWeight: '600',
+    color: 'black',
   },
-  planSubtitle: {
+  planDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    color: 'gray',
+    marginTop: 2,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: 'white',
+    textAlign: 'center',
   },
 }); 

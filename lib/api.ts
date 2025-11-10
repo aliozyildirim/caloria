@@ -1,7 +1,4 @@
 import AuthService from './auth';
-import { db, storage, auth } from './firebase';
-import { Platform } from 'react-native';
-import { v4 as uuidv4 } from 'uuid';
 
 const API_BASE_URL = 'http://localhost:3001/api';
 
@@ -264,10 +261,27 @@ export interface GameRoomResponse {
   totalRooms: number;
 }
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 class ApiService {
   private static async makeRequest(endpoint: string, options: RequestInit = {}) {
-    const user = AuthService.getCurrentUser();
-    const token = user?.token;
+    // Token'ı AsyncStorage'dan yükle
+    const token = await AuthService.getTokenAsync();
+    
+    // Public endpoint'ler (auth, stories, diet-plans listesi)
+    const publicEndpoints = ['/auth/', '/stories', '/diet-plans'];
+    const isPublicEndpoint = publicEndpoints.some(ep => endpoint.includes(ep));
+    
+    // Token yoksa ve endpoint auth gerektiriyorsa hata döndür
+    if (!token && !isPublicEndpoint) {
+      // Token yok, auth ekranına yönlendir
+      const error = new Error('Authentication required. Please login again.');
+      (error as any).status = 401;
+      throw error;
+    }
 
     const headers = {
       'Content-Type': 'application/json',
@@ -296,6 +310,21 @@ class ApiService {
           console.log('Could not parse error response:', parseError);
         }
         
+        // Eğer token geçersizse, kullanıcıyı logout yap
+        if ((response.status === 401 || response.status === 403) && 
+            (errorMessage.includes('Invalid token') || 
+             errorMessage.includes('invalid signature') || 
+             errorMessage.includes('Unauthorized'))) {
+          console.log('🔄 Geçersiz token tespit edildi, logout yapılıyor...');
+          // Logout işlemini async olarak yap ama beklemeden devam et
+          AuthService.logout().catch(err => console.error('Logout error:', err));
+          
+          // Session expired hatası fırlat
+          const sessionError = new Error('Session expired. Please login again.');
+          (sessionError as any).status = 401;
+          throw sessionError;
+        }
+        
         const error = new Error(errorMessage);
         (error as any).status = response.status;
         (error as any).response = { data: errorData || { error: errorMessage } };
@@ -311,50 +340,14 @@ class ApiService {
 
   // Stories
   static async getStories() {
-    try {
-      const snapshot = await db.collection('stories')
-        .orderBy('createdAt', 'desc')
-        .get();
-
-      return snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-    } catch (error) {
-      console.error('Error fetching stories:', error);
-      throw error;
-    }
+    return this.makeRequest('/stories');
   }
 
-  static async createStory({ imageUri, description, calories }: { 
-    imageUri: string; 
-    description: string; 
-    calories: number; 
-  }) {
-    try {
-      // Resmi Storage'a yükle
-      const imageRef = storage.ref(`stories/${uuidv4()}`);
-      
-      // Platform'a göre URI düzenlemesi
-      const uploadUri = Platform.OS === 'ios' ? imageUri.replace('file://', '') : imageUri;
-      
-      await imageRef.putFile(uploadUri);
-      const imageUrl = await imageRef.getDownloadURL();
-
-      // Firestore'a hikayeyi kaydet
-      const storyData = {
-        imageUrl,
-        description,
-        calories,
-        createdAt: new Date(),
-        userId: auth.currentUser?.uid,
-      };
-
-      await db.collection('stories').add(storyData);
-    } catch (error) {
-      console.error('Error creating story:', error);
-      throw error;
-    }
+  static async createStory(data: { imageUri?: string; description: string; calories: number }) {
+    return this.makeRequest('/stories', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   static async likeStory(storyId: number) {
@@ -363,16 +356,43 @@ class ApiService {
     });
   }
 
-  // User Profile
+  // User Profile - Using Python backend (port 5001) because auth is there
   static async getUserProfile() {
-    return this.makeRequest('/user/profile');
+    const token = await AuthService.getTokenAsync();
+
+    const response = await fetch('http://localhost:5001/api/user/profile', {
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to get profile' }));
+      throw new Error(errorData.error || 'Failed to get profile');
+    }
+
+    return await response.json();
   }
 
   static async updateUserProfile(data: any) {
-    return this.makeRequest('/user/profile', {
+    const token = await AuthService.getTokenAsync();
+
+    const response = await fetch('http://localhost:5001/api/user/profile', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
       body: JSON.stringify(data),
     });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Failed to update profile' }));
+      throw new Error(errorData.error || 'Failed to update profile');
+    }
+
+    return await response.json();
   }
 
   // Meals
@@ -530,7 +550,7 @@ class ApiService {
   // Meal Plans
   static async getMealPlans(period?: string, weekOffset?: number): Promise<MealPlan[]> {
     try {
-      const token = await AuthService.getToken();
+      const token = await AuthService.getTokenAsync();
       if (!token) throw new Error('No auth token');
 
       let url = `${API_BASE_URL}/meal-plans`;
@@ -625,7 +645,7 @@ class ApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       },
       body: JSON.stringify({ token })
     });
@@ -645,7 +665,7 @@ class ApiService {
   static async getNotificationSettings() {
     const response = await fetch(`${API_BASE_URL}/notifications/settings`, {
       headers: {
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       }
     });
 
@@ -661,7 +681,7 @@ class ApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       },
       body: JSON.stringify(settings)
     });
@@ -731,6 +751,13 @@ class ApiService {
     return this.makeRequest('/user/active-features');
   }
 
+  static async unlockFeature(featureId: string): Promise<{ success: boolean; message: string }> {
+    return this.makeRequest('/user/features/unlock', {
+      method: 'POST',
+      body: JSON.stringify({ featureId })
+    });
+  }
+
   static async activateReward(rewardId: number): Promise<{ message: string }> {
     return this.makeRequest(`/user/rewards/${rewardId}/activate`, {
       method: 'POST'
@@ -762,7 +789,7 @@ class ApiService {
   static async getDailyNutritionAdvice() {
     const response = await fetch(`${API_BASE_URL}/nutrition/daily-advice`, {
       headers: {
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       }
     });
 
@@ -776,7 +803,7 @@ class ApiService {
   static async getWeeklyNutritionPlan() {
     const response = await fetch(`${API_BASE_URL}/nutrition/weekly-plan`, {
       headers: {
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       }
     });
 
@@ -790,7 +817,7 @@ class ApiService {
   static async getNutritionAnalysis(days: number = 7) {
     const response = await fetch(`${API_BASE_URL}/nutrition/analysis?days=${days}`, {
       headers: {
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       }
     });
 
@@ -806,7 +833,7 @@ class ApiService {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${await AuthService.getToken()}`
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
       },
       body: JSON.stringify({ preferences, restrictions, goal })
     });
@@ -816,6 +843,10 @@ class ApiService {
     }
 
     return response.json();
+  }
+
+  static async checkNutritionistAccess(): Promise<{ hasAccess: boolean }> {
+    return this.makeRequest('/user/features/check-nutritionist');
   }
 
   // Game Room API methods
@@ -878,6 +909,24 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ room_code: roomCode, is_ready: isReady }),
     });
+  }
+
+  static async chatWithNutritionist(messages: Message[]) {
+    const response = await fetch(`${API_BASE_URL}/chat/nutritionist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${await AuthService.getTokenAsync()}`
+      },
+      body: JSON.stringify({ messages })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Chat request failed');
+    }
+
+    return response.json();
   }
 
   // ===============================

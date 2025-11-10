@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API Configuration
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://localhost:5001/api';
 
 export interface User {
   id: number;
@@ -23,6 +23,7 @@ class AuthService {
   private token: string | null = null;
   private user: User | null = null;
   private listeners: Array<(user: User | null) => void> = [];
+  private isLoggingOut: boolean = false;
 
   private constructor() {
     this.init();
@@ -68,12 +69,22 @@ class AuthService {
 
     try {
       const response = await fetch(`${API_BASE}${endpoint}`, options);
-      const result = await response.json();
       
+      // Response'u parse etmeden önce status kontrolü yap
       if (!response.ok) {
-        throw new Error(result.error || 'API call failed');
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const result = await response.json();
+          errorMessage = result.error || errorMessage;
+        } catch (e) {
+          // JSON parse edilemezse text olarak al
+          const text = await response.text();
+          errorMessage = text || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
       
+      const result = await response.json();
       return result;
     } catch (error) {
       console.error('API call error:', error);
@@ -84,14 +95,24 @@ class AuthService {
   private async validateToken(): Promise<boolean> {
     try {
       console.log('Validating token...');
+      if (!this.token) {
+        console.log('No token found, skipping validation');
+        return false;
+      }
       const userData = await this.apiCall('/user/me');
       console.log('Token validation - user data:', userData);
       this.user = userData;
+      this.isLoggingOut = false; // Token geçerli, logout flag'ini sıfırla
       this.notifyListeners();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Token validation failed:', error);
-      await this.logout();
+      // Token geçersizse sadece temizle, logout çağırma (sonsuz döngü olmasın)
+      if (error.message?.includes('Unauthorized') || error.message?.includes('Invalid token') || error.message?.includes('401')) {
+        console.log('Token is invalid, clearing from memory');
+        this.token = null;
+        this.user = null;
+      }
       return false;
     }
   }
@@ -105,6 +126,7 @@ class AuthService {
       });
 
       console.log('Login successful, user:', response.user);
+      this.isLoggingOut = false; // Login başarılı, logout flag'ini sıfırla
       this.token = response.token;
       this.user = response.user;
       
@@ -127,6 +149,7 @@ class AuthService {
         password
       });
 
+      this.isLoggingOut = false; // Register başarılı, logout flag'ini sıfırla
       this.token = response.token;
       this.user = response.user;
       
@@ -135,19 +158,34 @@ class AuthService {
       
       return this.user;
     } catch (error) {
+      console.log('Register error:', fullName, email, username, password);
       console.error('Register error:', error);
       throw error;
     }
   }
 
   async logout(): Promise<void> {
+    // Eğer zaten logout işlemi yapılıyorsa, tekrar yapma
+    if (this.isLoggingOut) {
+      console.log('⏭️ Logout zaten yapılıyor, atlanıyor...');
+      return;
+    }
+    
     try {
+      this.isLoggingOut = true;
       this.token = null;
       this.user = null;
       await AsyncStorage.removeItem('auth_token');
+      await AsyncStorage.removeItem('auth_user'); // Varsa user bilgisini de temizle
       this.notifyListeners();
+      console.log('✅ Logout başarılı, token temizlendi');
     } catch (error) {
       console.error('Logout error:', error);
+    } finally {
+      // Logout işlemi tamamlandı, flag'i sıfırla
+      setTimeout(() => {
+        this.isLoggingOut = false;
+      }, 1000); // 1 saniye sonra tekrar logout yapılabilir
     }
   }
 
@@ -159,6 +197,30 @@ class AuthService {
   }
 
   getToken(): string | null {
+    return this.token;
+  }
+
+  async getTokenAsync(): Promise<string | null> {
+    // Eğer logout yapılıyorsa null döndür
+    if (this.isLoggingOut) {
+      return null;
+    }
+    
+    // Eğer memory'de token varsa onu döndür
+    if (this.token) {
+      return this.token;
+    }
+    
+    // Memory'de yoksa AsyncStorage'dan yükle
+    try {
+      const storedToken = await AsyncStorage.getItem('auth_token');
+      if (storedToken) {
+        this.token = storedToken;
+      }
+    } catch (error) {
+      console.error('Error loading token from storage:', error);
+    }
+    
     return this.token;
   }
 

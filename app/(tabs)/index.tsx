@@ -9,6 +9,7 @@ import {
   RefreshControl,
   Animated,
   Alert,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -78,13 +79,14 @@ export default function HomeScreen() {
       }
 
       const today = new Date().toISOString().split('T')[0];
-      const [mealsData, profileData, challengeData, userRewardsData, xpData, waterData] = await Promise.all([
+      const [mealsData, profileData, challengeData, userRewardsData, xpData, waterData, nutritionistAccess] = await Promise.all([
         ApiService.getMeals(today).catch(() => []),
         ApiService.getUserProfile().catch(() => null),
         ApiService.getActiveChallenge().catch(() => null),
         ApiService.getUserRewards().catch(() => []),
         ApiService.getUserXP().catch(() => ({ totalXP: 0, level: 1 })),
-        ApiService.getTodayWaterIntake().catch(() => ({ glasses_count: 0, goal_glasses: 8 }))
+        ApiService.getTodayWaterIntake().catch(() => ({ glasses_count: 0, goal_glasses: 8 })),
+        ApiService.checkNutritionistAccess().catch(() => ({ hasAccess: false }))
       ]);
 
       // Calculate today's stats
@@ -107,15 +109,7 @@ export default function HomeScreen() {
       setUserXP(xpData);
       setWaterIntake(waterData.glasses_count || 0);
       setWaterGoal(waterData.goal_glasses || 8);
-
-      // Check if user has nutrition expert
-      const hasNutritionFeature = userRewardsData.some((reward: any) => 
-        reward.category === 'feature' && 
-        (reward.name.toLowerCase().includes('beslenme') || reward.name.toLowerCase().includes('nutrition'))
-      );
-      console.log('User rewards:', userRewardsData);
-      console.log('Has nutrition expert:', hasNutritionFeature);
-      setHasNutritionExpert(hasNutritionFeature);
+      setHasNutritionExpert(nutritionistAccess.hasAccess);
 
     } catch (error) {
       console.error('Error loading data:', error);
@@ -152,6 +146,27 @@ export default function HomeScreen() {
       } catch (error) {
         console.error('Error updating water intake:', error);
       }
+    }
+  };
+
+  const handleNutritionistAccess = () => {
+    if (hasNutritionExpert) {
+      router.push('/nutrition-expert');
+    } else {
+      Alert.alert(
+        '🔒 Özellik Kilitli',
+        'Beslenme uzmanı özelliğini XP Mağazasından açabilirsiniz.',
+        [
+          { text: 'Tamam', style: 'cancel' },
+          { 
+            text: 'Mağazaya Git', 
+            onPress: () => router.push({ 
+              pathname: '/(tabs)/games', 
+              params: { openModal: 'shop' } 
+            })
+          }
+        ]
+      );
     }
   };
 
@@ -291,20 +306,10 @@ export default function HomeScreen() {
 
                 <TouchableOpacity 
                   style={[styles.actionButton, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : theme.cardColor + '40' }]}
-                  onPress={() => {
-                    if (hasNutritionExpert) {
-                      router.push('/nutrition-expert');
-                    } else {
-                      Alert.alert('Premium Özellik', 'Beslenme uzmanı premium bir özelliktir.', [
-                        { text: 'Tamam', style: 'cancel' },
-                        { text: 'Satın Al', onPress: () => router.push({ pathname: '/(tabs)/games', params: { openModal: 'shop' } }) }
-                      ]);
-                    }
-                  }}
+                  onPress={handleNutritionistAccess}
                 >
-                  <Text style={[styles.actionIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🧠</Text>
+                  <Text style={[styles.actionIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>👩‍⚕️</Text>
                   <Text style={[styles.actionText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>Beslenme Uzmanı</Text>
-                  {!hasNutritionExpert && <Text style={styles.premiumBadge}>PRO</Text>}
                 </TouchableOpacity>
 
                 <TouchableOpacity 
@@ -407,6 +412,97 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </Animated.View>
             )}
+
+            {/* Active Plans */}
+            <Animated.View style={[styles.plansContainer, { opacity: fadeAnim }]}>
+              <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📋 Aktif Planlar</Text>
+              
+              <TouchableOpacity 
+                style={[styles.planCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}
+                onPress={() => router.push('/(tabs)/diets')}
+              >
+                <View style={styles.planContent}>
+                  <Text style={[styles.planIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🥗</Text>
+                  <View style={styles.planInfo}>
+                    <Text style={[styles.planTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                      Diyet Planı
+                    </Text>
+                    <Text style={[styles.planDesc, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
+                      Günlük beslenme planınızı görüntüleyin
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.planCard, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}
+                onPress={() => router.push('/(tabs)/water')}
+              >
+                <View style={styles.planContent}>
+                  <Text style={[styles.planIcon, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>💧</Text>
+                  <View style={styles.planInfo}>
+                    <Text style={[styles.planTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
+                      Su Planı
+                    </Text>
+                    <Text style={[styles.planDesc, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
+                      Günlük su tüketim hedefinizi takip edin
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={24} color={theme.textColor === '#ffffff' ? 'white' : theme.textColor} />
+                </View>
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Rewards Section */}
+            <Animated.View style={[styles.rewardsContainer, { opacity: fadeAnim }]}>
+              <Text style={[styles.sectionTitle, { color: theme.textColor }]}>
+                🏆 Ödüllerim
+              </Text>
+              
+              <ScrollView 
+                horizontal 
+                showsHorizontalScrollIndicator={false}
+                style={styles.rewardsScroll}
+              >
+                {/* Gece Teması Ödülü */}
+                <View style={[styles.rewardCard, { backgroundColor: theme.cardColor + '40' }]}>
+                  <Ionicons name="moon" size={32} color={theme.textColor} />
+                  <Text style={[styles.rewardTitle, { color: theme.textColor }]}>
+                    Gece Teması
+                  </Text>
+                  <Text style={[styles.rewardSubtitle, { color: theme.textColor + '99' }]}>
+                    Tema
+                  </Text>
+                </View>
+
+                {/* Diğer Ödüller */}
+                {userRewards.slice(0, 3).map((reward, index) => (
+                  <View 
+                    key={index}
+                    style={[styles.rewardCard, { backgroundColor: theme.cardColor + '40' }]}
+                  >
+                    <Text style={styles.rewardIcon}>{reward.icon || '🎁'}</Text>
+                    <Text style={[styles.rewardTitle, { color: theme.textColor }]}>
+                      {reward.name}
+                    </Text>
+                    <Text style={[styles.rewardSubtitle, { color: theme.textColor + '99' }]}>
+                      {reward.category}
+                    </Text>
+                  </View>
+                ))}
+                
+                <TouchableOpacity 
+                  style={[styles.rewardCard, { backgroundColor: theme.cardColor + '40' }]}
+                  onPress={() => router.push('/games')}
+                >
+                  <Ionicons name="arrow-forward" size={32} color={theme.textColor} />
+                  <Text style={[styles.rewardTitle, { color: theme.textColor }]}>
+                    Tümünü Gör
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            </Animated.View>
 
             {/* Today's Summary */}
             <Animated.View style={[styles.summaryContainer, { opacity: fadeAnim }]}>
@@ -739,5 +835,161 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
+  },
+  plansContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  planCard: {
+    borderRadius: 15,
+    padding: 15,
+    marginBottom: 10,
+  },
+  planContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  planIcon: {
+    fontSize: 24,
+    marginRight: 15,
+  },
+  planInfo: {
+    flex: 1,
+  },
+  planTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  planDesc: {
+    fontSize: 13,
+  },
+  rewardsContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  rewardsScroll: {
+    marginTop: 10,
+  },
+  rewardCard: {
+    width: 120,
+    height: 120,
+    borderRadius: 20,
+    padding: 16,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rewardIcon: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  rewardTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  rewardSubtitle: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  nutritionistContainer: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  nutritionistCard: {
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 10,
+  },
+  nutritionistContent: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  nutritionistImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 16,
+  },
+  nutritionistInfo: {
+    alignItems: 'center',
+  },
+  nutritionistTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  nutritionistDesc: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  nutritionistFeatures: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+  featureText: {
+    fontSize: 14,
+  },
+  nutritionistButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignItems: 'center',
+  },
+  nutritionistButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  nutritionSection: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+  },
+  nutritionCard: {
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 15,
+  },
+  nutritionContent: {
+    flexDirection: 'row',
+  },
+  nutritionInfo: {
+    flex: 1,
+  },
+  nutritionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  nutritionDesc: {
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  nutritionFeatures: {
+    marginBottom: 16,
+  },
+  priceTag: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  priceText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 }); 

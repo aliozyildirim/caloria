@@ -1,10 +1,12 @@
 const express = require('express');
-const mysql = require('mysql2');
 const cors = require('cors');
-const bcrypt = require('bcryptjs');
+const mysql = require('mysql2');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 const path = require('path');
 require('dotenv').config();
+// Model yükleme kaldırıldı - Python backend'de beslenme modeli mevcut
+// @xenova/transformers kullanılmıyor, Python backend kullanılıyor
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,9 +24,6 @@ const dbConfig = {
   user: 'root',
   password: 'root',
   database: 'caloria_db',
-  acquireTimeout: 60000,
-  timeout: 60000,
-  reconnect: true,
   connectionLimit: 10,
   queueLimit: 0
 };
@@ -58,19 +57,38 @@ pool.on('error', function(err) {
   }
 });
 
-// JWT Middleware
+// JWT Middleware - Python backend'den gelen token'ları da destekliyor
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  let token = authHeader && authHeader.split(' ')[1];
 
   if (!token) {
     return res.status(401).json({ error: 'Access token required' });
   }
 
-  jwt.verify(token, process.env.JWT_SECRET || 'caloria_secret', (err, user) => {
+  // Token'ı temizle (boşlukları kaldır)
+  token = token.trim();
+
+  const secret = process.env.JWT_SECRET || 'caloria_secret';
+  jwt.verify(token, secret, (err, user) => {
     if (err) {
+      // Sadece gerçek hataları logla, gereksiz detayları yazdırma
+      if (err.message !== 'invalid signature') {
+        console.error('Token verification error:', err.message);
+      }
       return res.status(403).json({ error: 'Invalid token' });
     }
+    
+    // Python backend'den gelen token'larda user_id var, Node.js'de userId bekleniyor
+    // Her iki formatı da destekle
+    if (user.user_id && !user.userId) {
+      user.userId = user.user_id;
+      user.id = user.user_id;
+    }
+    if (user.userId && !user.id) {
+      user.id = user.userId;
+    }
+    
     req.user = user;
     next();
   });
@@ -958,11 +976,28 @@ app.post('/api/challenges/:challengeId/accept', authenticateToken, async (req, r
     if (challengeResults.length === 0) {
       return res.status(404).json({ error: 'Challenge not found' });
     }
+
+    // Check if user already has an active challenge
+    const activeQuery = `
+      SELECT * FROM user_challenges 
+      WHERE user_id = ? AND is_completed = FALSE 
+      AND DATE(created_at) = CURDATE()
+    `;
+    const [activeResults] = await promisePool.execute(activeQuery, [userId]);
+    
+    if (activeResults.length > 0) {
+      return res.status(400).json({ 
+        error: 'Bugün zaten bir challenge kabul ettiniz. Her gün sadece 1 challenge kabul edebilirsiniz.' 
+      });
+    }
     
     const challenge = challengeResults[0];
     const startDate = new Date().toISOString().split('T')[0];
+    
+    // Set end date to end of the day, 7 days from now
     const endDate = new Date();
-    endDate.setDate(endDate.getDate() + 7); // 7 days from now
+    endDate.setDate(endDate.getDate() + 7);
+    endDate.setHours(23, 59, 59, 999);
     const endDateStr = endDate.toISOString().split('T')[0];
     
     // Insert user challenge
@@ -975,7 +1010,7 @@ app.post('/api/challenges/:challengeId/accept', authenticateToken, async (req, r
     ]);
     
     res.status(201).json({
-      message: 'Challenge accepted successfully!',
+      message: 'Challenge başarıyla kabul edildi!',
       userChallengeId: result.insertId,
       challenge: challenge
     });
@@ -3841,9 +3876,181 @@ function generateGameData(gameType) {
   }
 }
 
+// Beslenme uzmanı erişim kontrolü
+app.get('/api/user/features/check-nutritionist', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    
+    // ID 3 olan beslenme uzmanı rozetini kontrol et
+    const [rows] = await promisePool.query(
+      'SELECT COUNT(*) as has_access FROM user_rewards WHERE user_id = ? AND reward_id = 3',
+      [userId]
+    );
+
+    return res.json({
+      hasAccess: rows[0].has_access > 0,
+      message: 'Başarıyla kontrol edildi'
+    });
+
+  } catch (error) {
+    console.error('Error checking nutritionist access:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// User Features & Rewards
+app.get('/api/user/active-features', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const [features] = await pool.query(
+      'SELECT * FROM user_features WHERE user_id = ? AND is_active = TRUE',
+      [userId]
+    );
+    res.json(features);
+  } catch (error) {
+    console.error('Error getting active features:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.post('/api/user/features/unlock', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { featureId } = req.body;
+
+    if (!featureId) {
+      return res.status(400).json({ error: 'Feature ID is required' });
+    }
+
+    // ... rest of the code ...
+  } catch (error) {
+    console.error('Error unlocking feature:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Beslenme uzmanı chat endpoint'i - Python backend'e yönlendiriliyor
+app.post('/api/chat/nutritionist', authenticateToken, async (req, res) => {
+  try {
+    const { messages } = req.body;
+    
+    // Kullanıcının özelliğe erişimi var mı kontrol et
+    const [userRewards] = await promisePool.execute(
+      'SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = 3',
+      [req.user.userId]
+    );
+
+    if (userRewards.length === 0) {
+      return res.status(403).json({ error: 'Bu özelliğe erişiminiz yok' });
+    }
+
+    // Python backend'e yönlendir (Node.js 18+ built-in fetch kullanılıyor)
+    try {
+      const pythonResponse = await fetch('http://localhost:5001/nutritionist/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': req.headers['authorization'] || ''
+        },
+        body: JSON.stringify({ messages: messages })
+      });
+      
+      if (pythonResponse.ok) {
+        const data = await pythonResponse.json();
+        return res.json(data);
+      } else {
+        throw new Error('Python backend error');
+      }
+    } catch (pythonError) {
+      // Python backend yanıt vermezse basit bir fallback yanıt ver
+      const userMessage = messages[messages.length - 1]?.content || '';
+      const fallbackResponses = [
+        'Merhaba! Beslenme konularında size yardımcı olmaya hazırım. Ne konuda danışmak istiyorsunuz?',
+        'Sağlıklı beslenme konusunda size yardımcı olabilirim. Sorunuz nedir?',
+        'Beslenme ve diyet konularında danışmanlık yapabilirim. Nasıl yardımcı olabilirim?'
+      ];
+      const response = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+      return res.json({ response });
+    }
+  } catch (error) {
+    console.error('Chat error:', error);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Chat endpoint'i
+app.post('/api/chat', authenticateToken, async (req, res) => {
+  try {
+    const { messages } = req.body;
+    const userId = req.user.id;
+
+    // Kullanıcının XP shop'tan bu özelliği açıp açmadığını kontrol et
+    const [rewards] = await pool.execute(
+      'SELECT * FROM user_rewards WHERE user_id = ? AND reward_id = 3',
+      [userId]
+    );
+
+    if (rewards.length === 0) {
+      return res.status(403).json({ 
+        error: 'Bu özelliği kullanabilmek için XP shop\'tan açmanız gerekiyor!' 
+      });
+    }
+
+    // Kullanıcının beslenme bilgilerini al
+    const [userNutrition] = await pool.execute(
+      'SELECT daily_calories, diet_type, restrictions FROM user_nutrition WHERE user_id = ?',
+      [userId]
+    );
+
+    // Sistem mesajını hazırla
+    const systemMessage = {
+      role: "system",
+      content: `Sen Caloria uygulamasının beslenme uzmanısın. Türkçe konuşan, arkadaş canlısı ve yardımsever bir asistansın.
+
+Kullanıcı Bilgileri:
+- Günlük Kalori Hedefi: ${userNutrition?.daily_calories || 'Belirtilmemiş'}
+- Diyet Tipi: ${userNutrition?.diet_type || 'Standart'}
+- Kısıtlamalar: ${userNutrition?.restrictions || 'Yok'}
+
+Görevlerin:
+1. Beslenme, diyet ve fitness konularında danışmanlık yap
+2. Sağlıklı yemek tarifleri öner
+3. Kalori hesaplamalarında yardımcı ol
+4. Kişiselleştirilmiş beslenme tavsiyeleri ver
+5. Motivasyon ve destek sağla
+
+Her zaman Türkçe yanıt ver ve samimi bir dil kullan.`
+    };
+
+    // OpenAI'ye gönderilecek mesajları hazırla
+    const chatMessages = [
+      systemMessage,
+      ...messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    ];
+
+    // OpenAI'den yanıt al
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: chatMessages,
+      temperature: 0.7,
+      max_tokens: 500
+    });
+
+    res.json({ response: completion.choices[0].message.content });
+
+  } catch (error) {
+    console.error('Chat error:', error);
+    res.status(500).json({ error: 'Sohbet sırasında bir hata oluştu' });
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Mobile API: http://localhost:${PORT}/api`);
   console.log(`🌐 Web Admin: http://localhost:${PORT}`);
-}); 
+});

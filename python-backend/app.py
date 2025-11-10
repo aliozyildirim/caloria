@@ -10,12 +10,57 @@ from dotenv import load_dotenv
 import json
 import random
 from food_model import get_food_model
+# import torch
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+except ImportError:
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
+import mysql.connector
+import jwt
+import bcrypt
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+# Database configuration
+app.config['MYSQL_HOST'] = os.getenv('DB_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.getenv('DB_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.getenv('DB_PASSWORD', 'root')
+app.config['MYSQL_DB'] = os.getenv('DB_NAME', 'caloria_db')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'caloria_super_secret_jwt_key_2024_change_in_production')
+
+# JWT Secret - Node.js backend ile aynı secret key kullanılıyor
+JWT_SECRET = app.config['SECRET_KEY']
+
+# Database connection
+def get_db_connection():
+    return mysql.connector.connect(
+        host=app.config['MYSQL_HOST'],
+        user=app.config['MYSQL_USER'],
+        password=app.config['MYSQL_PASSWORD'],
+        database=app.config['MYSQL_DB']
+    )
+
+# Model ve tokenizer'ı global olarak yükle - Şimdilik devre dışı
+MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.2"
+try:
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_NAME,
+                                              torch_dtype=torch.float16,
+                                              device_map="auto",
+                                              load_in_4bit=True)
+    print("AI Beslenme Uzmanı modeli başarıyla yüklendi!")
+    tokenizer = None
+    model = None
+except Exception as e:
+    print(f"Model yüklenirken hata oluştu: {e}")
+    model = None
+    tokenizer = None
 
 def detect_image_content(image_array):
     """
@@ -144,6 +189,7 @@ def get_funny_non_food_message(category):
     return messages.get(category, 'Bu yemek gibi görünmüyor. Lütfen yemeğinin fotoğrafını çek! 📸')
 
 @app.route('/health', methods=['GET'])
+@app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({
         'status': 'healthy',
@@ -153,6 +199,7 @@ def health_check():
     })
 
 @app.route('/analyze-food', methods=['POST'])
+@app.route('/api/analyze-food', methods=['POST'])
 def analyze_food():
     try:
         # Get image data from request
@@ -198,8 +245,8 @@ def analyze_food():
             })
         
         # If OpenCV thinks it's food, use AI model for food classification
-        model = get_food_model()
-        ai_prediction = model.predict_food(image)
+        food_model = get_food_model()
+        ai_prediction = food_model.predict_food(image)
         
         # If AI model has low confidence, it might not be food
         if not ai_prediction['is_food'] or ai_prediction['confidence'] < 0.4:
@@ -219,7 +266,7 @@ def analyze_food():
             })
         
         # Get nutrition information
-        nutrition_info = model.get_nutrition_info(
+        nutrition_info = food_model.get_nutrition_info(
             ai_prediction['food_name'], 
             ai_prediction['confidence']
         )
@@ -249,25 +296,353 @@ def analyze_food():
 def model_info():
     """Get information about the loaded model"""
     try:
-        model = get_food_model()
+        food_model = get_food_model()
         return jsonify({
-            'model_name': model.model_name,
-            'model_loaded': model.model is not None,
-            'feature_extractor_loaded': model.feature_extractor is not None,
-            'food_database_size': len(model.food_nutrition_db),
-            'status': 'ready' if model.model is not None else 'fallback_mode'
+            'model_name': food_model.model_name,
+            'model_loaded': food_model.model is not None,
+            'feature_extractor_loaded': food_model.feature_extractor is not None,
+            'food_database_size': len(food_model.food_nutrition_db),
+            'status': 'ready' if food_model.model is not None else 'fallback_mode'
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/nutritionist/chat', methods=['POST'])
+@app.route('/api/nutritionist/chat', methods=['POST'])
+def chat_with_nutritionist():
+    """
+    Beslenme uzmanı AI ile sohbet endpoint'i
+    """
+    try:
+        data = request.get_json()
+        if not data or 'messages' not in data:
+            return jsonify({"error": "Geçersiz istek formatı"}), 400
+
+        # Şimdilik basit bir yanıt döndürelim
+        return jsonify({"response": "Merhaba! Beslenme konularında size yardımcı olmaya hazırım. Ne konuda danışmak istiyorsunuz?"})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+def get_current_user_id():
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None
+
+        token = auth_header.split(' ')[1]
+        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        return payload['user_id']
+    except:
+        return None
+
+# Auth endpoints
+@app.route('/auth/login', methods=['POST'])
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    try:
+        data = request.get_json()
+        if not data or 'emailOrUsername' not in data or 'password' not in data:
+            return jsonify({'error': 'Email/Username ve şifre gerekli'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Check if user exists by email or username
+        cursor.execute("""
+            SELECT id, email, username, password, full_name
+            FROM users
+            WHERE email = %s OR username = %s
+        """, (data['emailOrUsername'], data['emailOrUsername']))
+
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user:
+            return jsonify({'error': 'Kullanıcı bulunamadı'}), 401
+
+        # Verify password
+        if not bcrypt.checkpw(data['password'].encode('utf-8'), user['password'].encode('utf-8')):
+            return jsonify({'error': 'Şifre yanlış'}), 401
+
+        # Generate JWT token
+        token = jwt.encode({
+            'user_id': user['id'],
+            'email': user['email'],
+            'username': user['username'],
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, JWT_SECRET, algorithm='HS256')
+
+        return jsonify({
+            'message': 'Giriş başarılı',
+            'token': token,
+            'user': {
+                'id': user['id'],
+                'email': user['email'],
+                'username': user['username'],
+                'fullName': user['full_name']
+            }
+        })
+
+    except Exception as e:
+        print(f"Login error: {e}")
+        return jsonify({'error': 'Giriş yapılırken hata oluştu'}), 500
+
+@app.route('/auth/register', methods=['POST'])
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Veri gerekli'}), 400
+
+        required_fields = ['fullName', 'email', 'username', 'password']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'{field} alanı gerekli'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if user already exists
+        cursor.execute("""
+            SELECT id FROM users WHERE email = %s OR username = %s
+        """, (data['email'], data['username']))
+
+        if cursor.fetchone():
+            cursor.close()
+            conn.close()
+            return jsonify({'error': 'Bu email veya kullanıcı adı zaten kullanılıyor'}), 409
+
+        # Hash password
+        password_hash = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+        # Create user
+        cursor.execute("""
+            INSERT INTO users (full_name, email, username, password)
+            VALUES (%s, %s, %s, %s)
+        """, (data['fullName'], data['email'], data['username'], password_hash))
+
+        user_id = cursor.lastrowid
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        # Generate JWT token
+        token = jwt.encode({
+            'user_id': user_id,
+            'email': data['email'],
+            'username': data['username'],
+            'exp': datetime.utcnow() + timedelta(days=7)
+        }, JWT_SECRET, algorithm='HS256')
+
+        return jsonify({
+            'message': 'Kayıt başarılı',
+            'token': token,
+            'user': {
+                'id': user_id,
+                'email': data['email'],
+                'username': data['username'],
+                'fullName': data['fullName']
+            }
+        }), 201
+
+    except Exception as e:
+        print(f"Register error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Kayıt yapılırken hata oluştu: {str(e)}'}), 500
+
+@app.route('/user/me', methods=['GET'])
+@app.route('/api/user/me', methods=['GET'])
+def get_user_profile():
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT id, email, username, full_name, created_at
+            FROM users
+            WHERE id = %s
+        """, (user_id,))
+
+        user = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not user:
+            return jsonify({'error': 'Kullanıcı bulunamadı'}), 404
+
+        return jsonify({
+            'id': user['id'],
+            'email': user['email'],
+            'username': user['username'],
+            'fullName': user['full_name'],
+            'token': request.headers.get('Authorization', '').replace('Bearer ', '')
+        })
+
+    except Exception as e:
+        print(f"Get user profile error: {e}")
+        return jsonify({'error': 'Kullanıcı profili alınırken hata oluştu'}), 500
+
+# Get user profile (nutrition profile)
+@app.route('/api/user/profile', methods=['GET'])
+@app.route('/user/profile', methods=['GET'])
+def get_user_nutrition_profile():
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT * FROM user_profiles 
+            WHERE user_id = %s
+        """, (user_id,))
+
+        profile = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not profile:
+            return jsonify(None)
+
+        return jsonify(profile)
+
+    except Exception as e:
+        print(f"Get nutrition profile error: {e}")
+        return jsonify({'error': 'Profil bilgileri alınırken hata oluştu'}), 500
+
+# Create/Update user profile (nutrition profile)
+@app.route('/api/user/profile', methods=['POST'])
+@app.route('/user/profile', methods=['POST'])
+def update_user_nutrition_profile():
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'Veri gerekli'}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if profile exists
+        cursor.execute("SELECT id FROM user_profiles WHERE user_id = %s", (user_id,))
+        existing = cursor.fetchone()
+
+        if existing:
+            # Update existing profile
+            cursor.execute("""
+                UPDATE user_profiles SET
+                    name = %s, age = %s, height = %s, weight = %s,
+                    gender = %s, activity_level = %s, goal = %s,
+                    target_weight = %s, daily_calorie_goal = %s,
+                    daily_protein_goal = %s, daily_carbs_goal = %s,
+                    daily_fat_goal = %s, updated_at = NOW()
+                WHERE user_id = %s
+            """, (
+                data.get('name'),
+                data.get('age'),
+                data.get('height'),
+                data.get('weight'),
+                data.get('gender'),
+                data.get('activityLevel'),
+                data.get('goal'),
+                data.get('targetWeight'),
+                data.get('dailyCalorieGoal'),
+                data.get('dailyProteinGoal'),
+                data.get('dailyCarbsGoal'),
+                data.get('dailyFatGoal'),
+                user_id
+            ))
+        else:
+            # Insert new profile
+            cursor.execute("""
+                INSERT INTO user_profiles 
+                (user_id, name, age, height, weight, gender, activity_level, goal, 
+                 target_weight, daily_calorie_goal, daily_protein_goal, daily_carbs_goal, daily_fat_goal)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                user_id,
+                data.get('name'),
+                data.get('age'),
+                data.get('height'),
+                data.get('weight'),
+                data.get('gender'),
+                data.get('activityLevel'),
+                data.get('goal'),
+                data.get('targetWeight'),
+                data.get('dailyCalorieGoal'),
+                data.get('dailyProteinGoal'),
+                data.get('dailyCarbsGoal'),
+                data.get('dailyFatGoal')
+            ))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'message': 'Profil başarıyla kaydedildi',
+            'success': True
+        })
+
+    except Exception as e:
+        print(f"Update nutrition profile error: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f'Profil kaydedilirken hata oluştu: {str(e)}'}), 500
+
+@app.route('/api/user/features/check-nutritionist', methods=['GET'])
+@app.route('/user/features/check-nutritionist', methods=['GET'])
+def check_nutritionist_access():
+    try:
+        user_id = get_current_user_id()
+        if not user_id:
+            return jsonify({'error': 'Unauthorized'}), 401
+
+        # ID 3 olan beslenme uzmanı rozetini kontrol et
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT COUNT(*) as has_access
+            FROM user_rewards
+            WHERE user_id = %s AND reward_id = 3
+        """, (user_id,))
+        result = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        return jsonify({
+            'hasAccess': bool(result['has_access']),
+            'message': 'Başarıyla kontrol edildi'
+        })
+
+    except Exception as e:
+        print(f"Error checking nutritionist access: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 if __name__ == '__main__':
     print("🍎 Starting Caloria AI Food Recognition Backend...")
+    print(f"🔑 JWT_SECRET: {JWT_SECRET}")
+    print(f"🔑 SECRET_KEY: {app.config['SECRET_KEY']}")
     print("🤖 Loading AI models...")
     
     # Pre-load the model
     try:
-        model = get_food_model()
-        print(f"✅ Model loaded: {model.model is not None}")
+        food_model = get_food_model()
+        print(f"✅ Food Model loaded: {food_model.model is not None}")
+        print("✅ AI Nutritionist Model loaded")
     except Exception as e:
         print(f"❌ Model loading failed: {e}")
     
