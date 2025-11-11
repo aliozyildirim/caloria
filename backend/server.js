@@ -88,6 +88,18 @@ const authenticateToken = (req, res, next) => {
         
         // Use fallback token data
         user = tokenData;
+        
+        // Normalize user data
+        if (user.user_id && !user.userId) {
+          user.userId = user.user_id;
+          user.id = user.user_id;
+        }
+        if (user.userId && !user.id) {
+          user.id = user.userId;
+        }
+        
+        req.user = user;
+        return next();
       } catch (fallbackErr) {
         // Both JWT and fallback failed
         if (err.message !== 'invalid signature') {
