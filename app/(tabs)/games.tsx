@@ -1084,17 +1084,26 @@ export default function GamesScreen() {
     return categories[category] || (t.games as any).categoryOther || 'Diğer';
   };
 
-  // Helper function to get localized text
+  // Helper function to get localized text - ALWAYS returns string
   const getLocalizedText = (text: any): string => {
-    if (!text) return '';
+    // Handle null/undefined
+    if (!text && text !== 0 && text !== false) return '';
     
-    // If it's already a string, return it
+    // If it's already a string, try to parse if it's JSON
     if (typeof text === 'string') {
       // Try to parse if it's a JSON string
       try {
         const parsed = JSON.parse(text);
-        if (typeof parsed === 'object' && parsed !== null) {
-          return parsed[language] || parsed.tr || parsed.en || '';
+        if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
+          const result = parsed[language] || parsed.tr || parsed.en || '';
+          // Force string conversion
+          if (typeof result === 'string') return result;
+          if (typeof result === 'object' && result !== null) {
+            // Nested object, try to get string value
+            const nested = result[language] || result.tr || result.en || '';
+            return typeof nested === 'string' ? nested : String(nested || '');
+          }
+          return String(result || '');
         }
         return text;
       } catch (e) {
@@ -1104,11 +1113,35 @@ export default function GamesScreen() {
     }
     
     // If it's an object, get the localized version
-    if (typeof text === 'object' && text !== null) {
-      return text[language] || text.tr || text.en || '';
+    if (typeof text === 'object' && text !== null && !Array.isArray(text)) {
+      // Check if it has language keys
+      if (text[language] !== undefined) {
+        const result = text[language];
+        if (typeof result === 'string') return result;
+        if (typeof result === 'object' && result !== null) {
+          // Nested object
+          const nested = result[language] || result.tr || result.en || '';
+          return typeof nested === 'string' ? nested : String(nested || '');
+        }
+        return String(result || '');
+      }
+      
+      // Try tr or en
+      const result = text.tr || text.en || '';
+      if (typeof result === 'string') return result;
+      if (typeof result === 'object' && result !== null) {
+        const nested = result[language] || result.tr || result.en || '';
+        return typeof nested === 'string' ? nested : String(nested || '');
+      }
+      return String(result || '');
     }
     
-    return '';
+    // Fallback: convert to string (handles numbers, booleans, etc.)
+    try {
+      return String(text);
+    } catch (e) {
+      return '';
+    }
   };
 
   const getRewardIcon = (iconName: string) => {
@@ -2034,9 +2067,11 @@ export default function GamesScreen() {
                                     <Text style={styles.rewardIcon}>{getRewardIcon(reward.icon)}</Text>
                                   </View>
                                   <View style={styles.rewardMainInfo}>
-                                    <Text style={styles.rewardName}>{getLocalizedText(reward.name)}</Text>
+                                    <Text style={styles.rewardName}>
+                                      {String(getLocalizedText(reward.name) || '')}
+                                    </Text>
                                     <Text style={styles.rewardDescription} numberOfLines={2}>
-                                      {getLocalizedText(reward.description)}
+                                      {String(getLocalizedText(reward.description) || '')}
                                     </Text>
                                   </View>
                                 </View>
@@ -2199,21 +2234,23 @@ export default function GamesScreen() {
                             </View>
                           </View>
                           
-                          <Text style={styles.myRewardName}>{getLocalizedText(reward.name)}</Text>
+                          <Text style={styles.myRewardName}>
+                            {String(getLocalizedText(reward.name) || '')}
+                          </Text>
                           <Text style={styles.myRewardDescription} numberOfLines={2}>
-                            {getLocalizedText(reward.description)}
+                            {String(getLocalizedText(reward.description) || '')}
                           </Text>
                           
                           <View style={styles.myRewardFooter}>
                             <Text style={styles.myRewardCategory}>
-                              {reward.category === 'avatar' && '👤 Avatar'}
-                              {reward.category === 'theme' && '🎨 Tema'}
-                              {reward.category === 'badge' && '🏅 Rozet'}
-                              {reward.category === 'feature' && '⚡ Özellik'}
-                              {reward.category === 'discount' && '💰 İndirim'}
+                              {reward.category === 'avatar' && `👤 ${(t.games as any).categoryAvatar || 'Avatar'}`}
+                              {reward.category === 'theme' && `🎨 ${(t.games as any).categoryTheme || 'Tema'}`}
+                              {reward.category === 'badge' && `🏅 ${(t.games as any).categoryBadge || 'Rozet'}`}
+                              {reward.category === 'feature' && `⚡ ${(t.games as any).categoryFeature || 'Özellik'}`}
+                              {reward.category === 'discount' && `💰 ${(t.games as any).categoryDiscount || 'İndirim'}`}
                             </Text>
                             <Text style={styles.myRewardDate}>
-                              {new Date(reward.purchased_at).toLocaleDateString('tr-TR')}
+                              {new Date(reward.purchased_at).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US')}
                             </Text>
                           </View>
                         </LinearGradient>

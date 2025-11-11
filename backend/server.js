@@ -2515,12 +2515,25 @@ app.get('/api/rewards-shop', authenticateToken, async (req, res) => {
     `;
     const [rewards] = await promisePool.execute(rewardsQuery, [userId]);
     
+    // Parse JSON fields for rewards
+    const parsedRewards = rewards.map(reward => {
+      const parsedName = parseJsonField(reward.name);
+      const parsedDesc = parseJsonField(reward.description);
+      
+      // Ensure we return proper objects, not strings
+      return {
+        ...reward,
+        name: parsedName,
+        description: parsedDesc
+      };
+    });
+    
     // Get user's current XP
     const userXpQuery = 'SELECT total_xp FROM user_profiles WHERE user_id = ?';
     const [userXp] = await promisePool.execute(userXpQuery, [userId]);
     
     res.json({
-      rewards: rewards,
+      rewards: parsedRewards,
       userXP: (userXp[0] && userXp[0].total_xp) || 0,
       categories: ['avatar', 'theme', 'badge', 'feature', 'discount']
     });
@@ -2652,6 +2665,7 @@ app.post('/api/user/daily-bonus', authenticateToken, async (req, res) => {
 });
 
 // Get user's purchased rewards
+// Get user rewards
 app.get('/api/user/rewards', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -2666,7 +2680,19 @@ app.get('/api/user/rewards', authenticateToken, async (req, res) => {
     
     const [results] = await promisePool.execute(query, [userId]);
     
-    res.json(results);
+    // Parse JSON fields for user rewards
+    const parsedResults = results.map(reward => {
+      const parsedName = parseJsonField(reward.name);
+      const parsedDesc = parseJsonField(reward.description);
+      
+      return {
+        ...reward,
+        name: parsedName,
+        description: parsedDesc
+      };
+    });
+    
+    res.json(parsedResults);
   } catch (error) {
     console.error('Get user rewards error:', error);
     res.status(500).json({ error: 'Database error' });
@@ -2690,7 +2716,14 @@ app.get('/api/user/active-theme', authenticateToken, async (req, res) => {
     const [results] = await promisePool.execute(query, [userId]);
     
     if (results.length > 0) {
-      let rewardData = results[0].reward_data;
+      // Parse JSON fields
+      const parsedResult = {
+        ...results[0],
+        name: parseJsonField(results[0].name),
+        description: parseJsonField(results[0].description)
+      };
+      
+      let rewardData = parsedResult.reward_data;
       
       // Parse JSON if it's a string
       if (typeof rewardData === 'string') {
@@ -2703,7 +2736,7 @@ app.get('/api/user/active-theme', authenticateToken, async (req, res) => {
       }
       
       res.json({
-        ...results[0],
+        ...parsedResult,
         reward_data: rewardData
       });
     } else {
