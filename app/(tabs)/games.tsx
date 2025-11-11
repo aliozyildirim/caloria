@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
 import ApiService, { Challenge, UserChallenge, XPInfo, LeaderboardResponse, RewardsShopResponse, GameRoom, GameRoomResponse } from '../../lib/api';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -594,6 +595,7 @@ const WordGame = ({ onGameEnd }: { onGameEnd: (score: number) => void }) => {
 export default function GamesScreen() {
   const { openModal } = useLocalSearchParams();
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [userChallenges, setUserChallenges] = useState<UserChallenge[]>([]);
@@ -1275,7 +1277,7 @@ export default function GamesScreen() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={[styles.headerTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
-              🎮 Oyunlar & Challenges
+              🎮 {t.games.title}
             </Text>
             <Text style={[styles.headerSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>
               Oyna, yarış, kazan!
@@ -1301,7 +1303,7 @@ export default function GamesScreen() {
                 styles.tabButtonText, 
                 { color: selectedTab === 'games' ? 'white' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : theme.textColor + 'CC') }
               ]}>
-                Oyunlar
+                {t.games.games}
               </Text>
             </TouchableOpacity>
             
@@ -1419,7 +1421,7 @@ export default function GamesScreen() {
                 {/* Games Grid */}
                 <View style={styles.section}>
                   <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
-                    🎯 Multiplayer Oyunlar
+                    🎯 {t.games.multiplayerGames}
                   </Text>
                   <View style={styles.gamesGrid}>
                     {(['quiz', 'guess', 'math', 'word'] as GameType[]).map((gameType) => {
@@ -1500,7 +1502,7 @@ export default function GamesScreen() {
                         style={styles.quickActionGradient}
                       >
                         <Ionicons name="medal" size={24} color="white" />
-                        <Text style={styles.quickActionText}>Ödüllerim</Text>
+                        <Text style={styles.quickActionText}>{t.games.myRewards}</Text>
                       </LinearGradient>
                     </TouchableOpacity>
 
@@ -1588,7 +1590,7 @@ export default function GamesScreen() {
                     onPress={() => setShowMyRewardsModal(true)}
                   >
                     <Ionicons name="medal" size={16} color="#fff" />
-                    <Text style={styles.xpActionButtonText}>Ödüllerim</Text>
+                    <Text style={styles.xpActionButtonText}>{t.games.myRewards}</Text>
                   </TouchableOpacity>
                 </View>
               </LinearGradient>
@@ -1922,7 +1924,7 @@ export default function GamesScreen() {
 
               <View style={styles.roomModalInfo}>
                 <Text style={styles.roomModalInfoText}>
-                  💡 Oda oluşturup arkadaşlarınla özel oyunlar oynayabilirsin!
+                  💡 {t.games.roomInfo}
                 </Text>
                 <Text style={styles.roomModalInfoText}>
                   🔄 Sayfa yenilendiğinde yeni odalar görünür.
@@ -1943,8 +1945,8 @@ export default function GamesScreen() {
           <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>🏪 XP Mağazası</Text>
-                <Text style={styles.modalSubtitle}>Ödüllerini keşfet ve satın al</Text>
+                <Text style={styles.modalTitle}>🏪 {t.games.xpShop}</Text>
+                <Text style={styles.modalSubtitle}>{t.games.shopSubtitle}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.modalCloseButton, {
@@ -2046,8 +2048,8 @@ export default function GamesScreen() {
                   {rewardsData.rewards.length === 0 && (
                     <View style={styles.emptyRewards}>
                       <Text style={styles.emptyRewardsIcon}>🎁</Text>
-                      <Text style={styles.emptyRewardsText}>Henüz ödül bulunmuyor</Text>
-                      <Text style={styles.emptyRewardsSubtext}>Yakında yeni ödüller eklenecek!</Text>
+                      <Text style={styles.emptyRewardsText}>{t.games.noRewards}</Text>
+                      <Text style={styles.emptyRewardsSubtext}>{t.games.comingSoon}</Text>
                     </View>
                   )}
                   
@@ -2128,8 +2130,8 @@ export default function GamesScreen() {
           <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
               <View style={styles.modalTitleContainer}>
-                <Text style={styles.modalTitle}>🏅 Ödüllerim</Text>
-                <Text style={styles.modalSubtitle}>Satın aldığınız ödüller ve özellikler</Text>
+                <Text style={styles.modalTitle}>🏅 {t.games.myRewards}</Text>
+                <Text style={styles.modalSubtitle}>{t.games.myRewardsSubtitle}</Text>
               </View>
               <TouchableOpacity
                 style={[styles.modalCloseButton, {

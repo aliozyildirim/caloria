@@ -16,6 +16,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import ApiService from '../../lib/api';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +33,7 @@ interface DietPlan {
 }
 
 export default function DietsScreen() {
+  const { t } = useLanguage();
   const [dietPlans, setDietPlans] = useState<DietPlan[]>([]);
   const [activeDietPlan, setActiveDietPlan] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -215,8 +217,8 @@ export default function DietsScreen() {
       >
         <SafeAreaView style={styles.safeAreaContainer}>
           <View style={styles.header}>
-            <Text style={[styles.headerTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🥗 Diyet Planları</Text>
-            <Text style={[styles.headerSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>Sağlıklı beslenme programları</Text>
+            <Text style={[styles.headerTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🥗 {t.diets.title}</Text>
+            <Text style={[styles.headerSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : theme.textColor + 'CC' }]}>{t.diets.subtitle}</Text>
           </View>
 
           <ScrollView 
@@ -288,7 +290,7 @@ export default function DietsScreen() {
 
             {/* Diet Plans */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Mevcut Diyet Planları</Text>
+              <Text style={styles.sectionTitle}>{t.diets.availablePlans}</Text>
               {dietPlans
                 .sort((a, b) => {
                   // Aktif planı en üste koy
@@ -348,7 +350,7 @@ export default function DietsScreen() {
                       
                       <View style={styles.dietFooter}>
                         <Text style={styles.tapToLearnMore}>
-                          {isActive ? 'Aktif planınız - Detaylar için dokunun' : 'Detaylar için dokunun'}
+                          {isActive ? t.diets.activePlanTap : t.diets.tapForDetails}
                         </Text>
                         <Ionicons name="chevron-forward" size={20} color="rgba(255,255,255,0.8)" />
                       </View>

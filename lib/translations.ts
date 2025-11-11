@@ -79,6 +79,11 @@ export const translations = {
       tip3: 'Egzersiz sırasında daha fazla su için',
       settings: 'Su Takibi Ayarları',
       settingsSaved: 'Su takibi ayarlarınız güncellendi.',
+      todayProgress: 'Bugünkü İlerleme',
+      last7Days: 'Son 7 Gün',
+      decrease: 'Azalt',
+      enableNotifications: 'Bildirimleri Etkinleştir',
+      saveSettings: 'Ayarları Kaydet',
     },
     // Stories
     stories: {
@@ -91,20 +96,33 @@ export const translations = {
     },
     // Games/Rewards
     games: {
-      title: 'Oyunlar & Ödüller',
+      title: 'Oyunlar & Challenges',
       challenges: 'Meydan Okumalar',
       rewards: 'Ödüller',
       leaderboard: 'Lider Tablosu',
       yourRank: 'Sıralamanız',
       points: 'Puan',
+      games: 'Oyunlar',
+      multiplayerGames: 'Multiplayer Oyunlar',
+      myRewards: 'Ödüllerim',
+      myRewardsSubtitle: 'Satın aldığınız ödüller ve özellikler',
+      xpShop: 'XP Mağazası',
+      shopSubtitle: 'Ödüllerini keşfet ve satın al',
+      noRewards: 'Henüz ödül bulunmuyor',
+      comingSoon: 'Yakında yeni ödüller eklenecek!',
+      roomInfo: 'Oda oluşturup arkadaşlarınla özel oyunlar oynayabilirsin!',
     },
     // Diets
     diets: {
       title: 'Diyet Planları',
+      subtitle: 'Sağlıklı beslenme programları',
       activePlan: 'Aktif Plan',
       noPlan: 'Aktif plan yok',
       selectPlan: 'Plan Seç',
       myPlans: 'Planlarım',
+      availablePlans: 'Mevcut Diyet Planları',
+      activePlanTap: 'Aktif planınız - Detaylar için dokunun',
+      tapForDetails: 'Detaylar için dokunun',
     },
     // Camera/Add Meal
     camera: {
@@ -213,6 +231,11 @@ export const translations = {
       tip3: 'Drink more water during exercise',
       settings: 'Water Tracking Settings',
       settingsSaved: 'Your water tracking settings have been updated.',
+      todayProgress: 'Today\'s Progress',
+      last7Days: 'Last 7 Days',
+      decrease: 'Decrease',
+      enableNotifications: 'Enable Notifications',
+      saveSettings: 'Save Settings',
     },
     // Stories
     stories: {
@@ -225,20 +248,33 @@ export const translations = {
     },
     // Games/Rewards
     games: {
-      title: 'Games & Rewards',
+      title: 'Games & Challenges',
       challenges: 'Challenges',
       rewards: 'Rewards',
       leaderboard: 'Leaderboard',
       yourRank: 'Your Rank',
       points: 'Points',
+      games: 'Games',
+      multiplayerGames: 'Multiplayer Games',
+      myRewards: 'My Rewards',
+      myRewardsSubtitle: 'Your purchased rewards and features',
+      xpShop: 'XP Shop',
+      shopSubtitle: 'Discover and purchase rewards',
+      noRewards: 'No rewards yet',
+      comingSoon: 'New rewards coming soon!',
+      roomInfo: 'Create a room and play private games with friends!',
     },
     // Diets
     diets: {
       title: 'Diet Plans',
+      subtitle: 'Healthy nutrition programs',
       activePlan: 'Active Plan',
       noPlan: 'No active plan',
       selectPlan: 'Select Plan',
       myPlans: 'My Plans',
+      availablePlans: 'Available Diet Plans',
+      activePlanTap: 'Your active plan - Tap for details',
+      tapForDetails: 'Tap for details',
     },
     // Camera/Add Meal
     camera: {

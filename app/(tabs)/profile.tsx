@@ -452,254 +452,64 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               </View>
 
-              {/* Tema Kontrolleri */}
-              <View style={[styles.themeSection, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)' }]}>
-                <View style={styles.themeSectionHeader}>
-                  <View style={styles.themeIconContainer}>
-                    <LinearGradient
-                      colors={['#667eea', '#764ba2']}
-                      style={styles.themeIconGradient}
-                    >
-                      <Ionicons name="color-palette" size={24} color="white" />
-                    </LinearGradient>
+              {/* Tema Toggle - Basit */}
+              <View style={[styles.themeToggleSection, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)' }]}>
+                <View style={styles.themeToggleRow}>
+                  <View style={styles.themeToggleLeft}>
+                    <Ionicons 
+                      name={theme.textColor === '#ffffff' ? 'moon' : 'sunny'} 
+                      size={24} 
+                      color={theme.textColor === '#ffffff' ? 'white' : '#333'} 
+                    />
+                    <View style={styles.themeToggleText}>
+                      <Text style={[styles.themeToggleTitle, { color: theme.textColor === '#ffffff' ? 'white' : '#333' }]}>
+                        Karanlık Mod
+                      </Text>
+                      <Text style={[styles.themeToggleSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : '#666' }]}>
+                        {theme.textColor === '#ffffff' ? 'Aktif' : 'Kapalı'}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.themeHeaderText}>
-                    <Text style={[styles.themeSectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : '#333' }]}>
-                      🎨 Tema Seçimi
-                    </Text>
-                    <Text style={[styles.themeSectionSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : '#666' }]}>
-                      Aktif: {theme.textColor === '#ffffff' ? 'Gece Teması' : 'Gündüz Teması'}
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.themeOptionsContainer}>
-                  <TouchableOpacity 
-                    style={[
-                      styles.modernThemeButton,
-                      theme.textColor !== '#ffffff' && styles.activeModernThemeButton,
-                      { 
-                        backgroundColor: theme.textColor !== '#ffffff' ? '#4CAF50' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'),
-                        borderColor: theme.textColor !== '#ffffff' ? '#4CAF50' : 'transparent'
-                      }
-                    ]}
-                    onPress={async () => {
+                  <Switch
+                    value={theme.textColor === '#ffffff'}
+                    onValueChange={async (value) => {
                       try {
-                        console.log('🌞 Light theme button pressed');
+                        const newTheme = value ? 'dark' : 'light';
                         
-                        // Use new simple theme API
-                        try {
-                          console.log('Calling setUserTheme("light") API...');
-                          await ApiService.setUserTheme('light');
-                          console.log('setUserTheme success, refreshing theme...');
-                          await refreshTheme();
-                          Alert.alert('Başarılı! ☀️', 'Gündüz teması aktif edildi!');
-                        } catch (serverError) {
-                          console.log('Server error, using local theme:', serverError);
-                          setLocalTheme('light');
-                          Alert.alert('Başarılı! ☀️', 'Gündüz teması aktif edildi! (Local)');
+                        if (value) {
+                          const hasDarkTheme = userRewards.some(reward => 
+                            reward.name === 'Gece Teması' || reward.id === 2 || 
+                            (reward.category === 'theme' && reward.name.includes('Gece'))
+                          );
+                          
+                          if (!hasDarkTheme) {
+                            Alert.alert(
+                              'Gece Teması Kilitli 🔒', 
+                              'Gece temasını kullanmak için ödül mağazasından satın alın!',
+                              [
+                                { text: 'Tamam', style: 'cancel' },
+                                { text: 'Mağazaya Git', onPress: () => router.push({ pathname: '/(tabs)/games', params: { openModal: 'shop' } }) }
+                              ]
+                            );
+                            return;
+                          }
                         }
                         
-                        // Force reload the component
-                        setTimeout(() => {
-                          loadProfileData();
-                        }, 100);
-                        
+                        await ApiService.setUserTheme(newTheme);
+                        await refreshTheme();
+                        Alert.alert('✅', `${value ? 'Karanlık' : 'Aydınlık'} mod aktif!`);
                       } catch (error) {
                         console.error('Theme switch error:', error);
-                        Alert.alert('Hata!', 'Tema değiştirilemedi.');
+                        Alert.alert('Hata', 'Tema değiştirilemedi');
                       }
                     }}
-                  >
-                    <LinearGradient
-                      colors={theme.textColor !== '#ffffff' ? ['#4CAF50', '#45a049'] : ['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
-                      style={styles.themeButtonGradient}
-                    >
-                      <View style={styles.themeButtonContent}>
-                        <Ionicons 
-                          name="sunny" 
-                          size={28} 
-                          color={theme.textColor !== '#ffffff' ? 'white' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.6)' : '#666')} 
-                        />
-                        <Text style={[
-                          styles.modernThemeButtonText, 
-                          { color: theme.textColor !== '#ffffff' ? 'white' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.6)' : '#666') }
-                        ]}>
-                          Gündüz Teması
-                        </Text>
-                        <Text style={[
-                          styles.themeButtonSubtext,
-                          { color: theme.textColor !== '#ffffff' ? 'rgba(255,255,255,0.8)' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.4)' : '#999') }
-                        ]}>
-                          Ücretsiz
-                        </Text>
-                        {theme.textColor !== '#ffffff' && (
-                          <View style={styles.activeIndicator}>
-                            <Ionicons name="checkmark-circle" size={20} color="white" />
-                          </View>
-                        )}
-                      </View>
-                    </LinearGradient>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity 
-                    style={[
-                      styles.modernThemeButton,
-                      theme.textColor === '#ffffff' && styles.activeModernThemeButton,
-                      { 
-                        backgroundColor: theme.textColor === '#ffffff' ? '#bb86fc' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'),
-                        borderColor: theme.textColor === '#ffffff' ? '#bb86fc' : 'transparent'
-                      }
-                    ]}
-                    onPress={async () => {
-                      try {
-                        // Check if user has purchased dark theme reward
-                        const hasDarkTheme = userRewards.some(reward => 
-                          reward.name === 'Gece Teması' || 
-                          reward.id === 2 || 
-                          (reward.category === 'theme' && reward.name.includes('Gece'))
-                        );
-                        
-                        if (!hasDarkTheme) {
-                          Alert.alert(
-                            'Gece Teması Kilitli 🔒', 
-                            'Gece temasını kullanmak için önce ödül mağazasından satın almanız gerekiyor!',
-                            [
-                              { text: 'Tamam', style: 'cancel' },
-                              { 
-                                text: 'Mağazaya Git', 
-                                onPress: () => {
-                                  console.log('Navigating to games screen with rewards shop...');
-                                  router.push({ 
-                                    pathname: '/(tabs)/games', 
-                                    params: { openModal: 'shop' } 
-                                  });
-                                }
-                              }
-                            ]
-                          );
-                          return;
-                        }
-
-                        console.log('🌙 Dark theme button pressed - user has reward');
-                        
-                        // User has the reward, can use dark theme
-                        try {
-                          console.log('Calling setUserTheme("dark") API...');
-                          await ApiService.setUserTheme('dark');
-                          console.log('setUserTheme success, refreshing theme...');
-                          await refreshTheme();
-                          Alert.alert('Başarılı! 🌙', 'Gece teması aktif edildi!');
-                        } catch (serverError: any) {
-                          console.log('Server error:', serverError);
-                          
-                          if (serverError.status === 403 && serverError.response?.data?.errorCode === 'THEME_LOCKED') {
-                            // Backend says user doesn't have the reward
-                            Alert.alert(
-                              'Gece Teması Kilitli 🔒', 
-                              'Backend kontrolü: Gece temasını kullanmak için önce ödül mağazasından satın almanız gerekiyor!',
-                              [
-                                { text: 'Tamam', style: 'cancel' },
-                                { 
-                                  text: 'Mağazaya Git', 
-                                  onPress: () => {
-                                    console.log('Navigating to games screen with rewards shop...');
-                                    router.push({ 
-                                      pathname: '/(tabs)/games', 
-                                      params: { openModal: 'shop' } 
-                                    });
-                                  }
-                                }
-                              ]
-                            );
-                            return;
-                          }
-                          
-                          // Check if it's the specific dark theme locked message
-                          if (serverError.message && serverError.message.includes('Dark theme is locked')) {
-                            Alert.alert(
-                              'Gece Teması Kilitli 🔒', 
-                              'Backend doğrulaması başarısız! Gece temasını kullanmak için ödül mağazasından satın almanız gerekiyor.',
-                              [
-                                { text: 'Tamam', style: 'cancel' },
-                                { 
-                                  text: 'Mağazaya Git', 
-                                  onPress: () => {
-                                    console.log('Navigating to games screen with rewards shop...');
-                                    router.push({ 
-                                      pathname: '/(tabs)/games', 
-                                      params: { openModal: 'shop' } 
-                                    });
-                                  }
-                                }
-                              ]
-                            );
-                            return;
-                          }
-                          
-                          // All other server errors - NO LOCAL FALLBACK
-                          console.log('Server error, NO local fallback for dark theme:', serverError.message);
-                          Alert.alert(
-                            'Bağlantı Hatası ⚠️', 
-                            'Dark theme ayarlamak için internet bağlantısı gereklidir. Lütfen daha sonra tekrar deneyin.',
-                            [{ text: 'Tamam', style: 'cancel' }]
-                          );
-                        }
-                        
-                        // Force reload the component
-                        setTimeout(() => {
-                          loadProfileData();
-                        }, 100);
-                        
-                      } catch (error) {
-                        console.error('Theme activation error:', error);
-                        Alert.alert('Hata!', 'Tema değiştirilemedi.');
-                      }
-                    }}
-                  >
-                    <LinearGradient
-                      colors={theme.textColor === '#ffffff' ? ['#bb86fc', '#9c5dfc'] : ['rgba(187, 134, 252, 0.3)', 'rgba(156, 93, 252, 0.3)']}
-                      style={styles.themeButtonGradient}
-                    >
-                      <View style={styles.themeButtonContent}>
-                        <Ionicons 
-                          name="moon" 
-                          size={28} 
-                          color={theme.textColor === '#ffffff' ? 'white' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.6)' : '#666')} 
-                        />
-                        <Text style={[
-                          styles.modernThemeButtonText,
-                          { color: theme.textColor === '#ffffff' ? 'white' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.6)' : '#666') }
-                        ]}>
-                          Gece Teması
-                        </Text>
-                        <Text style={[
-                          styles.themeButtonSubtext,
-                          { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.8)' : (theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.4)' : '#999') }
-                        ]}>
-                          Premium
-                        </Text>
-                        {theme.textColor === '#ffffff' && (
-                          <View style={styles.activeIndicator}>
-                            <Ionicons name="checkmark-circle" size={20} color="white" />
-                          </View>
-                        )}
-                        {!userRewards.some(reward => 
-                          reward.name === 'Gece Teması' || 
-                          reward.id === 2 || 
-                          (reward.category === 'theme' && reward.name.includes('Gece'))
-                        ) && (
-                          <View style={styles.premiumLockIcon}>
-                            <Ionicons name="lock-closed" size={16} color="#FF6B6B" />
-                          </View>
-                        )}
-                      </View>
-                    </LinearGradient>
-                  </TouchableOpacity>
+                    trackColor={{ false: '#ccc', true: '#bb86fc' }}
+                    thumbColor={theme.textColor === '#ffffff' ? '#fff' : '#f4f3f4'}
+                  />
                 </View>
               </View>
 
-              {/* Body Stats Cards */}
+ {/* Body Stats Cards */}
               <View style={styles.bodyStatsSection}>
                 <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📊 Vücut İstatistikleri</Text>
                 <View style={styles.statsGrid}>
@@ -1199,93 +1009,31 @@ const styles = StyleSheet.create({
   safeAreaContainer: {
     flex: 1,
   },
-  themeSection: {
+  themeToggleSection: {
     padding: 20,
     marginBottom: 20,
+    borderRadius: 16,
   },
-  themeSectionHeader: {
+  themeToggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
   },
-  themeIconContainer: {
-    marginRight: 8,
-  },
-  themeIconGradient: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  themeToggleLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  themeHeaderText: {
     flex: 1,
-  },
-  themeSectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  themeSectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  themeOptionsContainer: {
-    flexDirection: 'column',
     gap: 12,
   },
-  modernThemeButton: {
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    marginBottom: 8,
+  themeToggleText: {
+    flex: 1,
   },
-  activeModernThemeButton: {
-    elevation: 8,
-    shadowOpacity: 0.35,
-  },
-  themeButtonGradient: {
-    paddingVertical: 20,
-    paddingHorizontal: 16,
-  },
-  themeButtonContent: {
-    alignItems: 'center',
-    position: 'relative',
-  },
-  modernThemeButtonText: {
+  themeToggleTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginTop: 8,
-    textAlign: 'center',
+    fontWeight: '600',
+    marginBottom: 2,
   },
-  themeButtonSubtext: {
-    fontSize: 12,
-    marginTop: 4,
-    textAlign: 'center',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(76, 175, 80, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  premiumLockIcon: {
-    position: 'absolute',
-    top: -10,
-    right: -10,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 107, 107, 0.9)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  themeToggleSubtitle: {
+    fontSize: 13,
   },
 }); 

@@ -168,7 +168,7 @@ export default function WaterScreen() {
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
             {/* Main Progress Card */}
             <View style={styles.progressCard}>
-              <Text style={styles.progressTitle}>Bugünkü İlerleme</Text>
+              <Text style={styles.progressTitle}>{t.water.todayProgress}</Text>
               
               <View style={styles.progressContainer}>
                 <View style={styles.circularProgress}>
@@ -213,7 +213,7 @@ export default function WaterScreen() {
                 disabled={waterIntake === 0}
               >
                 <Ionicons name="remove" size={24} color="white" />
-                <Text style={styles.actionButtonText}>Azalt</Text>
+                <Text style={styles.actionButtonText}>{t.water.decrease}</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -228,7 +228,7 @@ export default function WaterScreen() {
 
             {/* Weekly History */}
             <View style={styles.historyCard}>
-              <Text style={styles.cardTitle}>Son 7 Gün</Text>
+              <Text style={styles.cardTitle}>{t.water.last7Days}</Text>
               <View style={styles.historyGrid}>
                 {waterHistory.map((day, index) => {
                   const dayProgress = day.glasses_count / day.goal_glasses;
@@ -311,7 +311,7 @@ export default function WaterScreen() {
                 {/* Notifications */}
                 <View style={styles.settingSection}>
                   <View style={styles.settingRow}>
-                    <Text style={styles.settingLabel}>Bildirimleri Etkinleştir</Text>
+                    <Text style={styles.settingLabel}>{t.water.enableNotifications}</Text>
                     <Switch
                       value={notificationsEnabled}
                       onValueChange={setNotificationsEnabled}
@@ -362,7 +362,7 @@ export default function WaterScreen() {
                   style={styles.saveButton}
                   onPress={saveWaterSettings}
                 >
-                  <Text style={styles.saveButtonText}>Ayarları Kaydet</Text>
+                  <Text style={styles.saveButtonText}>{t.water.saveSettings}</Text>
                 </TouchableOpacity>
               </ScrollView>
             </LinearGradient>
