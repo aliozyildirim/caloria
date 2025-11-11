@@ -103,6 +103,32 @@ export default function HomeScreen() {
     return name ? `${t.home.goodEvening}, ${name}` : t.home.goodEvening;
   };
 
+  const getLocalizedText = (text: any): string => {
+    if (!text) return '';
+    
+    // If it's already a string, return it
+    if (typeof text === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[language] || parsed.tr || parsed.en || '';
+        }
+        return text;
+      } catch (e) {
+        // Not JSON, return as is
+        return text;
+      }
+    }
+    
+    // If it's an object, get the localized version
+    if (typeof text === 'object' && text !== null) {
+      return text[language] || text.tr || text.en || '';
+    }
+    
+    return '';
+  };
+
   const handleWaterIntake = async () => {
     if (waterIntake < waterGoal) {
       const newIntake = waterIntake + 1;
@@ -233,7 +259,7 @@ export default function HomeScreen() {
                   <View style={styles.challengeInfo}>
                     <Text style={styles.challengeTitle}>{t.home.dailyChallenge}</Text>
                     <Text style={styles.challengeDesc} numberOfLines={1}>
-                      {todayChallenge.description || t.home.completeGoal}
+                      {getLocalizedText(todayChallenge.description) || t.home.completeGoal}
                     </Text>
                   </View>
                 </View>

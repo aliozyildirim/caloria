@@ -595,7 +595,7 @@ const WordGame = ({ onGameEnd }: { onGameEnd: (score: number) => void }) => {
 export default function GamesScreen() {
   const { openModal } = useLocalSearchParams();
   const { theme } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [userChallenges, setUserChallenges] = useState<UserChallenge[]>([]);
@@ -678,7 +678,7 @@ export default function GamesScreen() {
       
     } catch (error) {
       console.error('Error loading data:', error);
-      Alert.alert('Yükleme Hatası', 'Veriler yüklenirken bir sorun oluştu. İnternet bağlantınızı kontrol edin.');
+      Alert.alert(t.games.loadingError, t.games.loadingErrorDesc);
     } finally {
       setIsLoading(false);
     }
@@ -711,33 +711,33 @@ export default function GamesScreen() {
     switch (type) {
       case 'quiz':
         return {
-          title: 'Beslenme Quiz',
+          title: t.games.gameQuiz,
           icon: '🧠',
-          description: 'Beslenme sorularını yarışarak cevapla',
+          description: t.games.gameQuizDesc,
           xp: '10-50 XP',
           color: ['#667eea', '#764ba2']
         };
       case 'guess':
         return {
-          title: 'Yemek Tahmin',
+          title: t.games.gameGuess,
           icon: '🍔',
-          description: 'Yemek fotoğrafından kalori tahmin et',
+          description: t.games.gameGuessDesc,
           xp: '15-40 XP',
           color: ['#f093fb', '#f5576c']
         };
       case 'math':
         return {
-          title: 'Hızlı Matematik',
+          title: t.games.gameMath,
           icon: '🔢',
-          description: 'Kalori hesaplama yarışması',
+          description: t.games.gameMathDesc,
           xp: '12-35 XP',
           color: ['#4facfe', '#00f2fe']
         };
       case 'word':
         return {
-          title: 'Kelime Oyunu',
+          title: t.games.gameWord,
           icon: '💬',
-          description: 'Sağlık kelime çağrışımı',
+          description: t.games.gameWordDesc,
           xp: '8-30 XP',
           color: ['#43e97b', '#38f9d7']
         };
@@ -770,17 +770,17 @@ export default function GamesScreen() {
   };
 
   const handleTournament = (gameType: GameType) => {
-    Alert.alert('🏆 Turnuva', 'Turnuva modu yakında gelecek!');
+    Alert.alert(t.games.tournamentComingSoon, t.games.tournamentDesc);
   };
 
   const createRoom = async () => {
     if (!playerName.trim()) {
-      Alert.alert('Hata', 'Lütfen oyuncu adınızı girin');
+      Alert.alert(t.games.enterPlayerName, t.games.enterPlayerNameDesc);
       return;
     }
     
     if (!selectedGameType) {
-      Alert.alert('Hata', 'Oyun türü seçilmedi');
+      Alert.alert(t.games.selectGameType, t.games.selectGameTypeDesc);
       return;
     }
 
@@ -792,7 +792,7 @@ export default function GamesScreen() {
         max_players: 2
       });
       
-      Alert.alert('🎉 Oda Oluşturuldu!', `Oda Kodu: ${newRoom.room_code}\nArkadaşlarınızla paylaşın!`);
+      Alert.alert(t.games.roomCreated, t.games.roomCreatedDesc.replace('{code}', newRoom.room_code));
       setCurrentRoom(newRoom);
       setShowRoomModal(false);
       setRoomCode('');
@@ -802,22 +802,22 @@ export default function GamesScreen() {
       loadGameRooms();
     } catch (error: any) {
       console.error('Create room error:', error);
-      Alert.alert('Oda Oluşturulamadı', 'Oda oluşturulurken bir sorun oluştu. Lütfen tekrar deneyin.');
+      Alert.alert(t.games.roomCreateFailed, t.games.roomCreateFailedDesc);
     }
   };
 
   const joinRoom = async () => {
     if (!roomCode.trim() || !playerName.trim()) {
-      Alert.alert('Hata', 'Lütfen oda kodunu ve oyuncu adınızı girin');
+      Alert.alert(t.games.enterRoomCode, t.games.enterRoomCodeDesc);
       return;
     }
     
     try {
-      Alert.alert('🎮 Odaya Katılıyorsun...', 'Lütfen bekle...');
+      Alert.alert(t.games.joiningRoom, t.games.joiningRoomDesc);
       
       const joinedRoom = await ApiService.joinGameRoom(roomCode.toUpperCase(), playerName);
       
-      Alert.alert('✅ Odaya Katıldın!', 'Oyun sahibi oyunu başlatana kadar bekle.');
+      Alert.alert(t.games.joinedRoom, t.games.joinedRoomDesc);
       setCurrentRoom(joinedRoom);
       setShowRoomModal(false);
       setRoomCode('');
@@ -829,13 +829,13 @@ export default function GamesScreen() {
       console.error('Join room error:', error);
       
       if (error.message && error.message.includes('Room not found')) {
-        Alert.alert('Oda Bulunamadı', 'Bu oda kodu ile bir oda bulunamadı. Kodu kontrol edin.');
+        Alert.alert(t.games.roomNotFound, t.games.roomNotFoundDesc);
       } else if (error.message && error.message.includes('Room is full')) {
-        Alert.alert('Oda Dolu', 'Bu oda maksimum oyuncu sayısına ulaştı.');
+        Alert.alert(t.games.roomFull, t.games.roomFullDesc);
       } else if (error.message && error.message.includes('Game already started')) {
-        Alert.alert('Oyun Başlamış', 'Bu odada oyun zaten başlamış. Başka bir oda deneyin.');
+        Alert.alert(t.games.gameStarted, t.games.gameStartedDesc);
       } else {
-        Alert.alert('Odaya Katılamadı', 'Odaya katılırken bir sorun oluştu. Lütfen tekrar deneyin.');
+        Alert.alert(t.games.joinRoomFailed, t.games.joinRoomFailedDesc);
       }
     }
   };
@@ -860,35 +860,35 @@ export default function GamesScreen() {
     try {
       if (activeChallenge && !activeChallenge.is_completed) {
         Alert.alert(
-          'Aktif Challenge Var',
-          'Zaten aktif bir challenge\'ınız var. Önce onu tamamlayın.',
+          t.games.activeChallengeExists,
+          t.games.finishCurrentFirst,
           [{ text: 'Tamam' }]
         );
         return;
       }
 
       Alert.alert(
-        'Challenge Kabul Et',
-        `"${challenge.title}" challenge'ını kabul etmek istediğinizden emin misiniz?\n\n${challenge.description}\n\nÖdül: ${challenge.xp_reward} XP`,
+        t.games.acceptChallenge.split('?')[0] + '?',
+        `"${getLocalizedText(challenge.title)}" ${t.games.acceptChallenge}\n\n${getLocalizedText(challenge.description)}\n\n${t.games.reward}: ${challenge.xp_reward} XP`,
         [
-          { text: 'İptal', style: 'cancel' },
+          { text: t.common.cancel, style: 'cancel' },
           {
             text: 'Kabul Et',
             onPress: async () => {
               try {
                 await ApiService.acceptChallenge(challenge.id);
-                Alert.alert('Başarılı! 🎯', 'Challenge kabul edildi! Başarılar!');
+                Alert.alert(t.games.challengeAccepted, t.games.challengeAcceptedDesc);
                 loadData(); // Refresh data
               } catch (error: any) {
                 console.error('Error accepting challenge:', error);
                 
                 if (error.message && error.message.includes('404')) {
-                  Alert.alert('Challenge Bulunamadı', 'Bu challenge artık mevcut değil. Lütfen sayfayı yenileyin.');
+                  Alert.alert(t.games.challengeNotFound, t.games.challengeNotFoundDesc);
                   loadData(); // Refresh challenges
                 } else if (error.message && error.message.includes('400')) {
-                  Alert.alert('Challenge Kabul Edilemedi', 'Zaten aktif bir challenge\'ınız var veya bu challenge kabul edilemez.');
+                  Alert.alert(t.games.challengeCannotAccept, t.games.challengeCannotAcceptDesc);
                 } else {
-                  Alert.alert('Kabul Edilemedi', 'Challenge kabul edilirken bir sorun oluştu. Lütfen tekrar deneyin.');
+                  Alert.alert(t.games.challengeAcceptFailed, t.games.challengeAcceptFailedDesc);
                 }
               }
             }
@@ -897,7 +897,7 @@ export default function GamesScreen() {
       );
     } catch (error) {
       console.error('Error in handleAcceptChallenge:', error);
-      Alert.alert('Beklenmeyen Hata', 'Bir sorun oluştu. Lütfen uygulamayı yeniden başlatın.');
+      Alert.alert(t.games.unexpectedError, t.games.unexpectedErrorDesc);
     }
   };
 
@@ -909,12 +909,12 @@ export default function GamesScreen() {
       
       if (result.completed) {
         Alert.alert(
-          'Tebrikler! 🎉',
-          `Challenge tamamlandı! ${result.completionXP} XP kazandınız!`,
+          t.games.challengeCompleted,
+          t.games.challengeCompletedDesc.replace('{xp}', result.completionXP.toString()),
           [{ text: 'Harika!' }]
         );
       } else {
-        Alert.alert('Başarılı! ⭐', result.message || 'Günlük ilerleme kaydedildi! +5 XP');
+        Alert.alert(t.games.progressSaved, result.message || t.games.progressSavedDesc);
       }
       
       loadData(); // Refresh data
@@ -923,14 +923,14 @@ export default function GamesScreen() {
       
       // Handle specific error cases with user-friendly messages
       if (error.message && error.message.includes('Bu challenge için bugün zaten ilerleme kaydettiniz')) {
-        Alert.alert('Zaten Tamamlandı! 😊', 'Bu challenge için bugün zaten ilerleme kaydettiniz. Yarın tekrar deneyin!');
+        Alert.alert(t.games.alreadyCompleted, t.games.alreadyCompletedDesc);
       } else if (error.message && error.message.includes('400')) {
-        Alert.alert('Zaten Tamamlandı! 😊', 'Bu challenge için bugün zaten ilerleme kaydettiniz. Yarın tekrar deneyin!');
+        Alert.alert(t.games.alreadyCompleted, t.games.alreadyCompletedDesc);
       } else if (error.message && error.message.includes('404')) {
-        Alert.alert('Challenge Bulunamadı', 'Bu challenge artık mevcut değil. Lütfen sayfayı yenileyin.');
+        Alert.alert(t.games.challengeNotFound, t.games.challengeNotFoundDesc);
         loadData(); // Refresh to get current challenges
       } else {
-        Alert.alert('İlerleme Kaydedilemedi', 'Challenge ilerlemesi kaydedilirken bir sorun oluştu. Lütfen tekrar deneyin.');
+        Alert.alert(t.games.progressSaveFailed, t.games.progressSaveFailedDesc);
       }
     }
   };
@@ -942,7 +942,7 @@ export default function GamesScreen() {
       setRewardsData(data);
     } catch (error) {
       console.error('Error loading rewards shop:', error);
-      Alert.alert('Mağaza Yüklenemedi', 'Ödül mağazası şu anda kullanılamıyor. Lütfen daha sonra tekrar deneyin.');
+      Alert.alert(t.common.error, t.games.shopLoadError);
     }
   };
 
@@ -952,7 +952,7 @@ export default function GamesScreen() {
       setLeaderboardData(data);
     } catch (error) {
       console.error('Error loading leaderboard:', error);
-      Alert.alert('Liderlik Tablosu Yüklenemedi', 'Liderlik tablosu şu anda kullanılamıyor. Sunucu ile bağlantı sorunu olabilir.');
+      Alert.alert(t.common.error, t.games.leaderboardLoadError);
     }
   };
 
@@ -960,8 +960,8 @@ export default function GamesScreen() {
     try {
       const result = await ApiService.claimDailyBonus();
       Alert.alert(
-        'Günlük Bonus! 🎁',
-        `${result.xpAwarded} XP kazandınız! (${result.streak} günlük seri)`,
+        t.games.dailyBonus,
+        t.games.dailyBonusDesc.replace('{xp}', result.xpAwarded.toString()).replace('{streak}', result.streak.toString()),
         [{ text: 'Harika!' }]
       );
       setDailyBonusClaimed(true);
@@ -971,49 +971,49 @@ export default function GamesScreen() {
       
       // Check for specific error messages
       if (error.message && error.message.includes('Daily bonus already claimed today')) {
-        Alert.alert('Günlük Bonus Alınmış', 'Bugünkü bonusunuzu zaten aldınız! Yarın tekrar gelin. 😊');
+        Alert.alert(t.games.dailyBonusClaimed, t.games.dailyBonusClaimedDesc);
         setDailyBonusClaimed(true);
       } else if (error.message && error.message.includes('400')) {
-        Alert.alert('Günlük Bonus Alınmış', 'Bugünkü bonusunuzu zaten aldınız! Yarın tekrar gelin. 😊');
+        Alert.alert(t.games.dailyBonusClaimed, t.games.dailyBonusClaimedDesc);
         setDailyBonusClaimed(true);
       } else {
-        Alert.alert('Bonus Alınamadı', 'Günlük bonus alınırken bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+        Alert.alert(t.games.bonusFailed, t.games.bonusFailedDesc);
       }
     }
   };
 
   const purchaseReward = async (rewardId: number, rewardName: string, cost: number) => {
     Alert.alert(
-      'Ödül Satın Al',
-      `"${rewardName}" ödülünü ${cost} XP karşılığında satın almak istiyor musunuz?`,
+      t.games.purchaseReward,
+      t.games.purchaseRewardDesc.replace('{name}', rewardName).replace('{cost}', cost.toString()),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Satın Al',
+          text: t.games.purchase,
           onPress: async () => {
             try {
               const result = await ApiService.purchaseReward(rewardId);
-              Alert.alert('Başarılı! 🎉', result.message || 'Ödül başarıyla satın alındı!');
+              Alert.alert(t.common.success + ' 🎉', result.message || t.games.rewardPurchased);
               loadRewardsShop(); // Refresh rewards
               loadData(); // Refresh XP data
             } catch (error: any) {
               console.error('Purchase reward error:', error);
               
               if (error.message && error.message.includes('Insufficient XP')) {
-                Alert.alert('Yetersiz XP', 'Bu ödülü satın almak için yeterli XP\'niz yok. Daha fazla challenge tamamlayın!');
+                Alert.alert(t.games.insufficientXP, t.games.insufficientXPDesc);
               } else if (error.message && error.message.includes('Reward already purchased')) {
-                Alert.alert('Zaten Satın Alınmış', 'Bu ödülü zaten satın almışsınız.');
+                Alert.alert(t.games.alreadyPurchased, t.games.alreadyPurchasedDesc);
               } else if (error.message && error.message.includes('Database error')) {
-                Alert.alert('Sunucu Sorunu', 'Satın alma işlemi şu anda gerçekleştirilemiyor. Lütfen birkaç dakika sonra tekrar deneyin.');
+                Alert.alert(t.games.serverIssue, t.games.serverIssueDesc);
               } else if (error.message && error.message.includes('400')) {
-                Alert.alert('Satın Alınamadı', 'Yetersiz XP veya ödül zaten satın alınmış!');
+                Alert.alert(t.games.purchaseFailed, t.games.purchaseFailedDesc);
               } else if (error.message && error.message.includes('404')) {
-                Alert.alert('Ödül Bulunamadı', 'Bu ödül artık mevcut değil.');
+                Alert.alert(t.games.rewardNotFound, t.games.rewardNotFoundDesc);
                 loadRewardsShop(); // Refresh rewards
               } else if (error.message && error.message.includes('500')) {
-                Alert.alert('Sunucu Hatası', 'Sunucuda bir sorun oluştu. Lütfen daha sonra tekrar deneyin.');
+                Alert.alert(t.games.serverError, t.games.serverErrorDesc);
               } else {
-                Alert.alert('Satın Alma Başarısız', 'Ödül satın alınırken beklenmeyen bir sorun oluştu. Lütfen tekrar deneyin.');
+                Alert.alert(t.games.purchaseError, t.games.purchaseErrorDesc);
               }
             }
           }
@@ -1084,6 +1084,33 @@ export default function GamesScreen() {
     }
   };
 
+  // Helper function to get localized text
+  const getLocalizedText = (text: any): string => {
+    if (!text) return '';
+    
+    // If it's already a string, return it
+    if (typeof text === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[language] || parsed.tr || parsed.en || '';
+        }
+        return text;
+      } catch (e) {
+        // Not JSON, return as is
+        return text;
+      }
+    }
+    
+    // If it's an object, get the localized version
+    if (typeof text === 'object' && text !== null) {
+      return text[language] || text.tr || text.en || '';
+    }
+    
+    return '';
+  };
+
   const getRewardIcon = (iconName: string) => {
     switch (iconName) {
       case 'bronze': return '🥉';
@@ -1131,7 +1158,7 @@ export default function GamesScreen() {
       await loadGameRooms();
       
       if (response.all_ready) {
-        Alert.alert('🎉 Tüm Oyuncular Hazır!', 'Host oyunu başlatabilir.');
+        Alert.alert(t.games.allPlayersReady, t.games.allPlayersReadyDesc);
       }
     } catch (error: any) {
       console.error('❌ Ready status error:', error);
@@ -1152,15 +1179,15 @@ export default function GamesScreen() {
         return { ...prevRoom, players: updatedPlayers };
       });
       
-      Alert.alert('Hata', `Hazır durumu güncellenirken bir sorun oluştu: ${error.message || 'Bilinmeyen hata'}`);
+      Alert.alert(t.games.readyStatusError, t.games.readyStatusErrorDesc.replace('{error}', error.message || t.games.difficultyUnknown));
     }
   };
 
   const handleStartGame = () => {
-    Alert.alert('🚀 Oyunu Başlat', 'Oyunu başlatmak istediğinizden emin misiniz?', [
-      { text: 'İptal', style: 'cancel' },
+    Alert.alert(t.games.startGame, t.games.startGameDesc, [
+      { text: t.common.cancel, style: 'cancel' },
       { 
-        text: 'Başlat', 
+        text: t.games.start, 
         onPress: () => {
           setCurrentGame(currentRoom!.game_type as GameType);
           setIsPlaying(true);
@@ -1170,8 +1197,8 @@ export default function GamesScreen() {
   };
 
   const handleLeaveRoom = () => {
-    Alert.alert('🚪 Odadan Çık', 'Odadan çıkmak istediğinizden emin misiniz?', [
-      { text: 'Kalsam', style: 'cancel' },
+    Alert.alert(t.games.leaveRoom, t.games.leaveRoomDesc, [
+      { text: t.games.stayInRoom, style: 'cancel' },
       { 
         text: 'Çık', 
         onPress: async () => {
@@ -1186,7 +1213,7 @@ export default function GamesScreen() {
             console.log('✅ Leave room API response:', response);
             
             // Show success message
-            Alert.alert('👋 Odadan Çıktın', 'Başka bir odaya katılabilirsin.');
+            Alert.alert(t.games.leftRoom, t.games.leftRoomDesc);
             
             // Refresh rooms to see updated count
             await loadGameRooms(); 
@@ -1198,7 +1225,7 @@ export default function GamesScreen() {
             setCurrentRoom(null);
             
             // Show error but still clear local state
-            Alert.alert('⚠️ Uyarı', `Odadan çıkarken hata oluştu ama yerel durum temizlendi: ${error.message || 'Bilinmeyen hata'}`);
+            Alert.alert(t.games.leaveRoomWarning, t.games.leaveRoomWarningDesc.replace('{error}', error.message || t.games.difficultyUnknown));
             
             // Still refresh to get current state
             try {
@@ -1473,7 +1500,7 @@ export default function GamesScreen() {
                         style={styles.quickActionGradient}
                       >
                         <Ionicons name="trophy" size={24} color="white" />
-                        <Text style={styles.quickActionText}>Liderlik Tablosu</Text>
+                        <Text style={styles.quickActionText}>{t.games.leaderboard}</Text>
                       </LinearGradient>
                     </TouchableOpacity>
 
@@ -1489,7 +1516,7 @@ export default function GamesScreen() {
                         style={styles.quickActionGradient}
                       >
                         <Ionicons name="storefront" size={24} color="white" />
-                        <Text style={styles.quickActionText}>Mağaza</Text>
+                        <Text style={styles.quickActionText}>{t.games.shop}</Text>
                       </LinearGradient>
                     </TouchableOpacity>
 
@@ -1559,7 +1586,7 @@ export default function GamesScreen() {
                   >
                     <Ionicons name="gift" size={16} color="#fff" />
                     <Text style={styles.xpActionButtonText}>
-                      {dailyBonusClaimed ? 'Alındı' : 'Günlük Bonus'}
+                      {dailyBonusClaimed ? t.games.claimed : t.games.dailyBonus}
                     </Text>
                   </TouchableOpacity>
                   
@@ -1571,7 +1598,7 @@ export default function GamesScreen() {
                     }}
                   >
                     <Ionicons name="storefront" size={16} color="#fff" />
-                    <Text style={styles.xpActionButtonText}>Mağaza</Text>
+                    <Text style={styles.xpActionButtonText}>{t.games.shop}</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -1582,7 +1609,7 @@ export default function GamesScreen() {
                     }}
                   >
                     <Ionicons name="trophy" size={16} color="#fff" />
-                    <Text style={styles.xpActionButtonText}>Liderlik</Text>
+                    <Text style={styles.xpActionButtonText}>{t.games.leaderboard}</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -1605,7 +1632,7 @@ export default function GamesScreen() {
                 >
                   <View style={styles.activeChallengeHeader}>
                     <Text style={styles.activeChallengeTitle}>
-                      {activeChallenge.is_completed ? '✅ Tamamlanan Challenge' : '🎯 Aktif Challenge'}
+                      {activeChallenge.is_completed ? '✅ ' + t.games.completedChallenge : '🎯 ' + t.games.activeChallenge}
                     </Text>
                     <Text style={styles.activeChallengeIcon}>
                       {getIconForType(activeChallenge.type || '')}
@@ -1613,10 +1640,10 @@ export default function GamesScreen() {
                   </View>
                   
                   <Text style={styles.activeChallengeName}>
-                    {activeChallenge.title || 'Challenge'}
+                    {getLocalizedText(activeChallenge.title) || 'Challenge'}
                   </Text>
                   <Text style={styles.activeChallengeDescription}>
-                    {activeChallenge.description || 'Açıklama yok'}
+                    {getLocalizedText(activeChallenge.description) || t.common.loading}
                   </Text>
                   
                   <View style={styles.activeChallengeProgress}>
@@ -1646,17 +1673,17 @@ export default function GamesScreen() {
                       onPress={handleUpdateProgress}
                     >
                       <Ionicons name="checkmark-circle" size={20} color="#4CAF50" />
-                      <Text style={styles.updateProgressText}>Bugün Tamamladım!</Text>
+                      <Text style={styles.updateProgressText}>{t.games.completedToday}</Text>
                     </TouchableOpacity>
                   )}
                   
                   <View style={styles.challengeInfo}>
                     <Text style={styles.challengeInfoText}>
-                      🎁 Ödül: +{activeChallenge.xp_reward} XP
+                      🎁 {t.games.reward}: +{activeChallenge.xp_reward} XP
                     </Text>
                     {!activeChallenge.is_completed && (
                       <Text style={styles.challengeInfoText}>
-                        ⏱️ Kalan: {Math.max(0, Math.ceil((new Date(activeChallenge.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} gün
+                        ⏱️ {t.games.remaining}: {Math.max(0, Math.ceil((new Date(activeChallenge.end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} {t.diets.days}
                       </Text>
                     )}
                   </View>
@@ -1691,7 +1718,7 @@ export default function GamesScreen() {
                           </Text>
                         </View>
                         <View style={styles.challengeHeaderInfo}>
-                          <Text style={styles.challengeTitle}>{challenge.title}</Text>
+                          <Text style={styles.challengeTitle}>{getLocalizedText(challenge.title)}</Text>
                           <View style={styles.challengeBadges}>
                             <View style={styles.difficultyBadge}>
                               <Text style={styles.difficultyText}>
@@ -1708,7 +1735,7 @@ export default function GamesScreen() {
                       </View>
                       
                       <Text style={styles.challengeDescription}>
-                        {challenge.description}
+                        {getLocalizedText(challenge.description)}
                       </Text>
                       
                       <View style={styles.challengeFooter}>
@@ -1729,7 +1756,7 @@ export default function GamesScreen() {
                             styles.acceptButtonText,
                             isUnavailable && styles.acceptButtonTextDisabled
                           ]}>
-                            {isUnavailable ? 'Aktif Challenge Var' : 'Kabul Et'}
+                            {isUnavailable ? t.games.activeChallengeExists : t.games.accept}
                           </Text>
                         </TouchableOpacity>
                       </View>
@@ -1974,13 +2001,15 @@ export default function GamesScreen() {
                   colors={['#6366f1', '#8b5cf6']}
                   style={styles.userXpCard}
                 >
-                  <View style={styles.userXpContent}>
-                    <Text style={styles.userXpLabel}>Mevcut XP Bakiyeniz</Text>
-                    <Text style={styles.userXpAmount}>{rewardsData.userXP.toLocaleString()}</Text>
-                    <Text style={styles.userXpSubtext}>XP kazanmak için challenge'ları tamamlayın</Text>
-                  </View>
-                  <View style={styles.xpIcon}>
-                    <Ionicons name="star" size={32} color="#FFD700" />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={styles.userXpContent}>
+                      <Text style={styles.userXpLabel}>{t.games.currentXP}</Text>
+                      <Text style={styles.userXpAmount}>{rewardsData.userXP.toLocaleString()}</Text>
+                      <Text style={styles.userXpSubtext}>{t.games.earnXPHint}</Text>
+                    </View>
+                    <View style={styles.xpIcon}>
+                      <Ionicons name="star" size={32} color="#FFD700" />
+                    </View>
                   </View>
                 </LinearGradient>
                 
@@ -2005,9 +2034,9 @@ export default function GamesScreen() {
                                     <Text style={styles.rewardIcon}>{getRewardIcon(reward.icon)}</Text>
                                   </View>
                                   <View style={styles.rewardMainInfo}>
-                                    <Text style={styles.rewardName}>{reward.name}</Text>
+                                    <Text style={styles.rewardName}>{getLocalizedText(reward.name)}</Text>
                                     <Text style={styles.rewardDescription} numberOfLines={2}>
-                                      {reward.description}
+                                      {getLocalizedText(reward.description)}
                                     </Text>
                                   </View>
                                 </View>
@@ -2033,7 +2062,7 @@ export default function GamesScreen() {
                                       <Ionicons name="card" size={16} color="#fff" />
                                     )}
                                     <Text style={styles.purchaseButtonText}>
-                                      {reward.is_purchased ? 'Satın Alındı' : 'Satın Al'}
+                                      {reward.is_purchased ? t.games.purchased : t.games.purchase}
                                     </Text>
                                   </TouchableOpacity>
                                 </View>
@@ -2068,7 +2097,7 @@ export default function GamesScreen() {
         >
           <SafeAreaView style={styles.modalContainer}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🏆 Liderlik Tablosu</Text>
+              <Text style={styles.modalTitle}>🏆 {t.games.leaderboard}</Text>
               <TouchableOpacity
                 style={[styles.modalCloseButton, {
                   padding: 12,
@@ -2194,9 +2223,9 @@ export default function GamesScreen() {
                 ) : (
                   <View style={styles.emptyMyRewards}>
                     <Text style={styles.emptyMyRewardsIcon}>🎁</Text>
-                    <Text style={styles.emptyMyRewardsText}>Henüz ödülünüz yok</Text>
+                    <Text style={styles.emptyMyRewardsText}>{t.games.noRewardsYet}</Text>
                     <Text style={styles.emptyMyRewardsSubtext}>
-                      XP kazanın ve mağazadan ödül satın alın!
+                      {t.games.earnXPAndBuy}
                     </Text>
                     <TouchableOpacity
                       style={styles.goToShopButton}
@@ -2207,7 +2236,7 @@ export default function GamesScreen() {
                       }}
                     >
                       <Ionicons name="storefront" size={16} color="#fff" />
-                      <Text style={styles.goToShopButtonText}>Mağazaya Git</Text>
+                      <Text style={styles.goToShopButtonText}>{t.games.goToShop}</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -3185,7 +3214,7 @@ const styles = StyleSheet.create({
   // Modal
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f5f5f5',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
@@ -3430,42 +3459,42 @@ const styles = StyleSheet.create({
 
   // User XP Card
   userXpCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 20,
+    padding: 20,
     marginBottom: 24,
-    elevation: 2,
+    marginHorizontal: 16,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   userXpContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
+    flex: 1,
   },
 
   // User XP Details
   userXpLabel: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.9)',
+    marginBottom: 8,
+    fontWeight: '600',
   },
   userXpAmount: {
-    fontSize: 24,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#000',
+    color: '#fff',
+    marginBottom: 4,
   },
   userXpSubtext: {
     fontSize: 12,
-    color: '#666',
+    color: 'rgba(255,255,255,0.8)',
   },
   xpIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(76,175,80,0.1)',
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -3490,14 +3519,16 @@ const styles = StyleSheet.create({
   },
   rewardCard: {
     width: width / 2 - 24,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    elevation: 2,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 16,
+    padding: 14,
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   rewardCardInner: {
     flex: 1,
@@ -3553,22 +3584,25 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
   },
   purchaseButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#6366f1',
+    paddingVertical: 8,
     paddingHorizontal: 12,
-    borderRadius: 16,
+    borderRadius: 12,
   },
   purchaseButtonPurchased: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#10b981',
   },
   purchaseButtonDisabled: {
-    backgroundColor: '#E0E0E0',
-    opacity: 0.5,
+    backgroundColor: '#cbd5e1',
+    opacity: 0.7,
   },
   purchaseButtonText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
 
   // Empty Rewards

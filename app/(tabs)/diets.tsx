@@ -33,7 +33,7 @@ interface DietPlan {
 }
 
 export default function DietsScreen() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [dietPlans, setDietPlans] = useState<DietPlan[]>([]);
   const [activeDietPlan, setActiveDietPlan] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,6 +42,33 @@ export default function DietsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
 
   const { theme } = useTheme();
+
+  // Helper function to get localized text
+  const getLocalizedText = (text: any): string => {
+    if (!text) return '';
+    
+    // If it's already a string, return it
+    if (typeof text === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[language] || parsed.tr || parsed.en || '';
+        }
+        return text;
+      } catch (e) {
+        // Not JSON, return as is
+        return text;
+      }
+    }
+    
+    // If it's an object, get the localized version
+    if (typeof text === 'object' && text !== null) {
+      return text[language] || text.tr || text.en || '';
+    }
+    
+    return '';
+  };
 
   // Mock diet plans data
   const mockDietPlans: DietPlan[] = [
@@ -167,7 +194,7 @@ export default function DietsScreen() {
 
     Alert.alert(
       'Diyet Planını Başlat',
-      `"${diet.name}" diyet planını başlatmak istediğinizden emin misiniz?\n\nSüre: ${diet.duration} gün\nGünlük Kalori: ${diet.daily_calories} kcal\n\n⚠️ Dikkat: Bu diyet planını başlatmadan önce doktorunuza danışmanızı öneririz.`,
+      `"${getLocalizedText(diet.name)}" ${t.diets.confirmStart}\n\n${t.diets.duration}: ${diet.duration} ${t.diets.days}\n${t.diets.dailyCalories}: ${diet.daily_calories} kcal\n\n⚠️ ${t.diets.warning}`,
       [
         { text: 'İptal', style: 'cancel' },
         {
@@ -176,7 +203,7 @@ export default function DietsScreen() {
             try {
               // Real API call
               await ApiService.activateDietPlan(diet.id);
-              Alert.alert('Başarılı!', `${diet.name} diyet planı başlatıldı! Başarılar!`);
+              Alert.alert(t.common.success, `${getLocalizedText(diet.name)} ${t.diets.started}`);
               setModalVisible(false);
               loadData(); // Refresh data
             } catch (error) {
@@ -240,8 +267,8 @@ export default function DietsScreen() {
                   style={styles.activeDietGradient}
                 >
                   <View style={styles.activeDietHeader}>
-                    <Text style={styles.activeDietTitle}>🎯 Aktif Diyet Planı</Text>
-                    <Text style={styles.activeDietName}>{activeDietPlan.diet_plan?.name || activeDietPlan.name}</Text>
+                    <Text style={styles.activeDietTitle}>{t.diets.activeDietPlan}</Text>
+                    <Text style={styles.activeDietName}>{getLocalizedText(activeDietPlan.diet_plan?.name || activeDietPlan.name)}</Text>
                   </View>
                   
                   <View style={styles.activeDietStats}>
@@ -249,22 +276,22 @@ export default function DietsScreen() {
                       <Text style={styles.dietStatValue}>
                         {Math.floor((new Date().getTime() - new Date(activeDietPlan.start_date).getTime()) / (1000 * 60 * 60 * 24))}
                       </Text>
-                      <Text style={styles.dietStatLabel}>Gün Geçti</Text>
+                      <Text style={styles.dietStatLabel}>{t.diets.daysPassed}</Text>
                     </View>
                     <View style={styles.dietStatItem}>
                       <Text style={styles.dietStatValue}>
                         {Math.max(0, Math.floor((new Date(activeDietPlan.end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))}
                       </Text>
-                      <Text style={styles.dietStatLabel}>Gün Kaldı</Text>
+                      <Text style={styles.dietStatLabel}>{t.diets.daysRemaining}</Text>
                     </View>
                     <View style={styles.dietStatItem}>
                       <Text style={styles.dietStatValue}>{activeDietPlan.diet_plan?.daily_calories || activeDietPlan.daily_calories}</Text>
-                      <Text style={styles.dietStatLabel}>Günlük Kcal</Text>
+                      <Text style={styles.dietStatLabel}>{t.diets.dailyKcal}</Text>
                     </View>
                   </View>
                   
                   <View style={styles.viewMealPlanButton}>
-                    <Text style={styles.viewMealPlanText}>Günlük Yemek Planını Gör</Text>
+                    <Text style={styles.viewMealPlanText}>{t.diets.viewMealPlan}</Text>
                     <Ionicons name="arrow-forward" size={20} color="white" />
                   </View>
                 </LinearGradient>
@@ -279,11 +306,10 @@ export default function DietsScreen() {
               >
                 <View style={styles.disclaimerHeader}>
                   <Ionicons name="warning" size={24} color="white" />
-                  <Text style={styles.disclaimerTitle}>Önemli Uyarı</Text>
+                  <Text style={styles.disclaimerTitle}>{t.diets.importantWarning}</Text>
                 </View>
                 <Text style={styles.disclaimerText}>
-                  Herhangi bir diyet programına başlamadan önce doktorunuza danışmanızı şiddetle tavsiye ederiz. 
-                  Bu uygulamadaki bilgiler genel bilgilendirme amaçlıdır ve kişisel sağlık tavsiyesi yerine geçmez.
+                  {t.diets.warningText}
                 </Text>
               </LinearGradient>
             </View>
@@ -321,8 +347,8 @@ export default function DietsScreen() {
                       
                       <View style={styles.dietHeader}>
                         <View style={styles.dietInfo}>
-                          <Text style={styles.dietTitle}>{diet.name}</Text>
-                          <Text style={styles.dietDescription}>{diet.description}</Text>
+                          <Text style={styles.dietTitle}>{getLocalizedText(diet.name)}</Text>
+                          <Text style={styles.dietDescription}>{getLocalizedText(diet.description)}</Text>
                         </View>
                         <View style={styles.dietBadges}>
                           <View style={styles.difficultyBadge}>
@@ -381,7 +407,7 @@ export default function DietsScreen() {
               {selectedDiet && (
                 <>
                   <View style={styles.modalHeader}>
-                    <Text style={styles.modalTitle}>{selectedDiet.name}</Text>
+                    <Text style={styles.modalTitle}>{getLocalizedText(selectedDiet.name)}</Text>
                     <TouchableOpacity
                       style={styles.closeButton}
                       onPress={() => setModalVisible(false)}
@@ -390,7 +416,7 @@ export default function DietsScreen() {
                     </TouchableOpacity>
                   </View>
 
-                  <Text style={styles.modalDescription}>{selectedDiet.description}</Text>
+                  <Text style={styles.modalDescription}>{getLocalizedText(selectedDiet.description)}</Text>
 
                   <View style={styles.modalStats}>
                     <View style={styles.modalStatItem}>

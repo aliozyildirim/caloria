@@ -462,6 +462,43 @@ app.post('/api/favorites', authenticateToken, async (req, res) => {
 // ===============================
 
 // Get all diet plans
+// Helper function to parse JSON fields
+const parseJsonField = (field) => {
+  if (!field) return null;
+  
+  // If it's already a parsed object, return it
+  if (typeof field === 'object' && !Array.isArray(field) && field !== null) {
+    // Check if it's a MySQL JSON object (has en/tr keys)
+    if (field.en !== undefined || field.tr !== undefined) {
+      return field;
+    }
+    // If it's a plain object but not our format, return as is
+    return field;
+  }
+  
+  // If it's a string, try to parse it
+  if (typeof field === 'string') {
+    // Check if it's already a valid JSON string
+    if (field.trim().startsWith('{') || field.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(field);
+        // If parsed successfully and it's an object, return it
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed;
+        }
+        return field;
+      } catch (e) {
+        // If not valid JSON, return as is (fallback for old data)
+        return field;
+      }
+    }
+    // If it doesn't look like JSON, return as is
+    return field;
+  }
+  
+  return field;
+};
+
 app.get('/api/diet-plans', authenticateToken, async (req, res) => {
   try {
     const query = 'SELECT * FROM diet_plans ORDER BY created_at DESC';
@@ -470,6 +507,8 @@ app.get('/api/diet-plans', authenticateToken, async (req, res) => {
     // Process each diet plan to properly parse JSON fields
     const processedResults = results.map(plan => ({
       ...plan,
+      name: parseJsonField(plan.name),
+      description: parseJsonField(plan.description),
       benefits: (() => {
         try {
           console.log('Parsing benefits:', plan.benefits, typeof plan.benefits);
@@ -560,8 +599,8 @@ app.get('/api/diet-plans/active', authenticateToken, async (req, res) => {
       created_at: result.created_at,
       diet_plan: {
         id: result.diet_plan_id,
-        name: result.name,
-        description: result.description,
+        name: parseJsonField(result.name),
+        description: parseJsonField(result.description),
         type: result.type,
         duration: result.duration,
         daily_calories: result.daily_calories,
@@ -939,7 +978,15 @@ app.get('/api/challenges', authenticateToken, async (req, res) => {
   try {
     const query = 'SELECT * FROM challenges WHERE is_active = TRUE ORDER BY difficulty, title';
     const [results] = await promisePool.execute(query);
-    res.json(results);
+    
+    // Parse JSON fields for multilanguage support
+    const processedResults = results.map(challenge => ({
+      ...challenge,
+      title: parseJsonField(challenge.title),
+      description: parseJsonField(challenge.description)
+    }));
+    
+    res.json(processedResults);
   } catch (error) {
     console.error('Get challenges error:', error);
     res.status(500).json({ error: 'Database error' });
@@ -956,7 +1003,15 @@ app.get('/api/challenges/random', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'No challenges found' });
     }
     
-    res.json(results[0]);
+    // Parse JSON fields for multilanguage support
+    const challenge = results[0];
+    const processedChallenge = {
+      ...challenge,
+      title: parseJsonField(challenge.title),
+      description: parseJsonField(challenge.description)
+    };
+    
+    res.json(processedChallenge);
   } catch (error) {
     console.error('Get random challenge error:', error);
     res.status(500).json({ error: 'Database error' });
@@ -1155,7 +1210,15 @@ app.get('/api/user/active-challenge', authenticateToken, async (req, res) => {
       return res.json(null);
     }
     
-    res.json(results[0]);
+    // Parse JSON fields for multilanguage support
+    const result = results[0];
+    const processedResult = {
+      ...result,
+      title: parseJsonField(result.title),
+      description: parseJsonField(result.description)
+    };
+    
+    res.json(processedResult);
   } catch (error) {
     console.error('Get active challenge error:', error);
     res.status(500).json({ error: 'Database error' });
