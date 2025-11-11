@@ -129,7 +129,7 @@ app.post('/api/auth/register', async (req, res) => {
     const [result] = await promisePool.execute(insertQuery, [email, username, hashedPassword, fullName]);
 
     const userId = result.insertId;
-    const token = jwt.sign({ userId, email, username }, process.env.JWT_SECRET || 'caloria_secret', { expiresIn: '7d' });
+    const token = jwt.sign({ userId: userId, email, username }, process.env.JWT_SECRET || 'caloria_secret', { expiresIn: '7d' });
 
     res.status(201).json({
       message: 'User created successfully',
