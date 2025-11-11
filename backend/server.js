@@ -2306,25 +2306,25 @@ app.post('/api/notifications/settings', authenticateToken, async (req, res) => {
     if (existing.length === 0) {
       // No existing settings, create with defaults and provided values
       finalSettings = {
-        water_reminders: water_reminders ?? true,
-        meal_reminders: meal_reminders ?? true,
-        challenge_notifications: challenge_notifications ?? true,
-        achievement_notifications: achievement_notifications ?? true,
-        general_notifications: general_notifications ?? true,
-        quiet_hours_start: quiet_hours_start ?? '22:00:00',
-        quiet_hours_end: quiet_hours_end ?? '07:00:00'
+        water_reminders: (water_reminders !== null && water_reminders !== undefined) ? water_reminders : true,
+        meal_reminders: (meal_reminders !== null && meal_reminders !== undefined) ? meal_reminders : true,
+        challenge_notifications: (challenge_notifications !== null && challenge_notifications !== undefined) ? challenge_notifications : true,
+        achievement_notifications: (achievement_notifications !== null && achievement_notifications !== undefined) ? achievement_notifications : true,
+        general_notifications: (general_notifications !== null && general_notifications !== undefined) ? general_notifications : true,
+        quiet_hours_start: (quiet_hours_start !== null && quiet_hours_start !== undefined) ? quiet_hours_start : '22:00:00',
+        quiet_hours_end: (quiet_hours_end !== null && quiet_hours_end !== undefined) ? quiet_hours_end : '07:00:00'
       };
     } else {
       // Update existing settings with only provided values
       const current = existing[0];
       finalSettings = {
-        water_reminders: water_reminders ?? current.water_reminders,
-        meal_reminders: meal_reminders ?? current.meal_reminders,
-        challenge_notifications: challenge_notifications ?? current.challenge_notifications,
-        achievement_notifications: achievement_notifications ?? current.achievement_notifications,
-        general_notifications: general_notifications ?? current.general_notifications,
-        quiet_hours_start: quiet_hours_start ?? current.quiet_hours_start,
-        quiet_hours_end: quiet_hours_end ?? current.quiet_hours_end
+        water_reminders: (water_reminders !== null && water_reminders !== undefined) ? water_reminders : current.water_reminders,
+        meal_reminders: (meal_reminders !== null && meal_reminders !== undefined) ? meal_reminders : current.meal_reminders,
+        challenge_notifications: (challenge_notifications !== null && challenge_notifications !== undefined) ? challenge_notifications : current.challenge_notifications,
+        achievement_notifications: (achievement_notifications !== null && achievement_notifications !== undefined) ? achievement_notifications : current.achievement_notifications,
+        general_notifications: (general_notifications !== null && general_notifications !== undefined) ? general_notifications : current.general_notifications,
+        quiet_hours_start: (quiet_hours_start !== null && quiet_hours_start !== undefined) ? quiet_hours_start : current.quiet_hours_start,
+        quiet_hours_end: (quiet_hours_end !== null && quiet_hours_end !== undefined) ? quiet_hours_end : current.quiet_hours_end
       };
     }
     
