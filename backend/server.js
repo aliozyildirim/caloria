@@ -72,12 +72,32 @@ const authenticateToken = (req, res, next) => {
   token = token.trim();
 
   const secret = process.env.JWT_SECRET || 'caloria_secret';
+  
+  // Try JWT verification first
   jwt.verify(token, secret, (err, user) => {
     if (err) {
-      // Sadece gerçek hataları logla, gereksiz detayları yazdırma
-      if (err.message !== 'invalid signature') {
-        console.error('Token verification error:', err.message);
+      // If JWT fails, try fallback token (base64 encoded JSON)
+      try {
+        const decoded = Buffer.from(token, 'base64').toString('utf-8');
+        const tokenData = JSON.parse(decoded);
+        
+        // Check expiration
+        if (tokenData.exp && tokenData.exp < Date.now()) {
+          return res.status(403).json({ error: 'Token expired' });
+        }
+        
+        // Use fallback token data
+        user = tokenData;
+      } catch (fallbackErr) {
+        // Both JWT and fallback failed
+        if (err.message !== 'invalid signature') {
+          console.error('Token verification error:', err.message);
+        }
+        return res.status(403).json({ error: 'Invalid token' });
       }
+    }
+    
+    if (!user) {
       return res.status(403).json({ error: 'Invalid token' });
     }
     
