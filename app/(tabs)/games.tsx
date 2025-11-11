@@ -3510,6 +3510,7 @@ const styles = StyleSheet.create({
   // Rewards
   rewardsScrollView: {
     paddingHorizontal: 16,
+    flex: 1,
   },
   categorySection: {
     marginBottom: 24,
@@ -3524,10 +3525,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
-    paddingHorizontal: 4,
+    paddingHorizontal: 0,
+    justifyContent: 'flex-start',
   },
   rewardCard: {
-    width: (width - 48) / 2,
+    width: '100%',
     backgroundColor: '#f8f9fa',
     borderRadius: 16,
     padding: 14,
