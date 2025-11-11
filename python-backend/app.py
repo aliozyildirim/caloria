@@ -650,5 +650,9 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"❌ Model loading failed: {e}")
     
-    print("🚀 Server starting on http://localhost:5001")
-    app.run(debug=True, host='0.0.0.0', port=5001) 
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', 5001))
+    debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    
+    print(f"🚀 Server starting on http://{host}:{port}")
+    app.run(debug=debug, host=host, port=port) 
