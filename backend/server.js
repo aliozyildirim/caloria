@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const path = require('path');
 require('dotenv').config();
@@ -130,13 +131,21 @@ app.post('/api/auth/register', async (req, res) => {
 
     const userId = result.insertId;
     
-    // JWT sign with explicit string conversion
-    const jwtSecret = String(process.env.JWT_SECRET || 'caloria_secret');
-    const token = jwt.sign(
-      { userId: userId, email: email, username: username }, 
-      jwtSecret, 
-      { expiresIn: '7d' }
-    );
+    // Generate simple token (fallback for old Node.js)
+    let token;
+    try {
+      const jwtSecret = String(process.env.JWT_SECRET || 'caloria_secret');
+      token = jwt.sign(
+        { userId: userId, email: email, username: username }, 
+        jwtSecret, 
+        { expiresIn: '7d' }
+      );
+    } catch (jwtError) {
+      console.log('JWT error, using fallback token:', jwtError.message);
+      // Fallback: simple token
+      const tokenData = JSON.stringify({ userId, email, username, exp: Date.now() + 7*24*60*60*1000 });
+      token = Buffer.from(tokenData).toString('base64');
+    }
 
     res.status(201).json({
       message: 'User created successfully',
@@ -172,11 +181,20 @@ app.post('/api/auth/login', async (req, res) => {
     const updateQuery = 'UPDATE users SET last_login_at = NOW() WHERE id = ?';
     await promisePool.execute(updateQuery, [user.id]);
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email, username: user.username }, 
-      process.env.JWT_SECRET || 'caloria_secret', 
-      { expiresIn: '7d' }
-    );
+    // Generate token (with fallback)
+    let token;
+    try {
+      const jwtSecret = String(process.env.JWT_SECRET || 'caloria_secret');
+      token = jwt.sign(
+        { userId: user.id, email: user.email, username: user.username }, 
+        jwtSecret, 
+        { expiresIn: '7d' }
+      );
+    } catch (jwtError) {
+      console.log('JWT error in login, using fallback token:', jwtError.message);
+      const tokenData = JSON.stringify({ userId: user.id, email: user.email, username: user.username, exp: Date.now() + 7*24*60*60*1000 });
+      token = Buffer.from(tokenData).toString('base64');
+    }
 
     res.json({
       message: 'Login successful',
