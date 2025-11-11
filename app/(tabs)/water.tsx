@@ -24,7 +24,7 @@ const { width } = Dimensions.get('window');
 
 export default function WaterScreen() {
   const { theme } = useTheme();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   
   const [waterIntake, setWaterIntake] = useState(0);
   const [waterGoal, setWaterGoal] = useState(8);
@@ -74,14 +74,14 @@ export default function WaterScreen() {
         await ApiService.updateWaterIntake(newIntake);
         
         if (newIntake >= waterGoal) {
-          Alert.alert('Tebrikler! 🎉', 'Günlük su hedefinizi tamamladınız! 💧');
+          Alert.alert(t.water.goalCompleted, t.water.goalCompletedDesc);
         }
       } catch (error) {
         console.error('Error updating water intake:', error);
         setWaterIntake(waterIntake); // Revert on error
       }
     } else {
-      Alert.alert('Harika! 💧', 'Günlük su hedefinizi zaten tamamladınız!');
+      Alert.alert(t.water.goalAlreadyCompleted, t.water.goalAlreadyCompletedDesc);
     }
   };
 
@@ -119,7 +119,7 @@ export default function WaterScreen() {
       Alert.alert('💧 ' + t.common.success, t.water.settingsSaved);
     } catch (error) {
       console.error('Error saving water settings:', error);
-      Alert.alert('Hata!', 'Ayarlar kaydedilemedi.');
+      Alert.alert(t.water.settingsError, t.water.settingsErrorDesc);
     }
   };
 
@@ -136,7 +136,7 @@ export default function WaterScreen() {
           <SafeAreaView style={styles.safeArea}>
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingEmoji}>💧</Text>
-              <Text style={[styles.loadingText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>Su Verileri Yükleniyor...</Text>
+              <Text style={[styles.loadingText, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>{t.water.loadingData}</Text>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -222,7 +222,7 @@ export default function WaterScreen() {
                 disabled={waterIntake >= waterGoal}
               >
                 <Ionicons name="add" size={24} color="white" />
-                <Text style={styles.actionButtonText}>Su İç</Text>
+                <Text style={styles.actionButtonText}>{t.water.drinkWater}</Text>
               </TouchableOpacity>
             </View>
 
@@ -232,7 +232,7 @@ export default function WaterScreen() {
               <View style={styles.historyGrid}>
                 {waterHistory.map((day, index) => {
                   const dayProgress = day.glasses_count / day.goal_glasses;
-                  const dayName = new Date(day.date).toLocaleDateString('tr-TR', { weekday: 'short' });
+                  const dayName = new Date(day.date).toLocaleDateString(language === 'tr' ? 'tr-TR' : 'en-US', { weekday: 'short' });
                   
                   return (
                     <View key={index} style={styles.historyItem}>
@@ -255,7 +255,7 @@ export default function WaterScreen() {
                 <Text style={styles.tipItem}>• {t.water.tip1}</Text>
                 <Text style={styles.tipItem}>• {t.water.tip2}</Text>
                 <Text style={styles.tipItem}>• {t.water.tip3}</Text>
-                <Text style={styles.tipItem}>• Su şişenizi her zaman yanınızda taşıyın</Text>
+                <Text style={styles.tipItem}>• {t.water.tip4}</Text>
               </View>
             </View>
 
@@ -290,7 +290,7 @@ export default function WaterScreen() {
               <ScrollView style={styles.settingsBody}>
                 {/* Goal Setting */}
                 <View style={styles.settingSection}>
-                  <Text style={styles.settingSectionTitle}>Günlük Hedef</Text>
+                  <Text style={styles.settingSectionTitle}>{t.water.dailyGoalLabel}</Text>
                   <View style={styles.goalSetting}>
                     <TouchableOpacity 
                       style={styles.goalButton}
@@ -298,7 +298,7 @@ export default function WaterScreen() {
                     >
                       <Ionicons name="remove" size={20} color="white" />
                     </TouchableOpacity>
-                    <Text style={styles.goalText}>{waterGoal} bardak</Text>
+                    <Text style={styles.goalText}>{waterGoal} {t.water.glassesLabel}</Text>
                     <TouchableOpacity 
                       style={styles.goalButton}
                       onPress={() => setWaterGoal(Math.min(16, waterGoal + 1))}
@@ -323,7 +323,7 @@ export default function WaterScreen() {
 
                 {/* Reminder Hours */}
                 <View style={styles.settingSection}>
-                  <Text style={styles.settingSectionTitle}>Hatırlatma Saatleri</Text>
+                  <Text style={styles.settingSectionTitle}>{t.water.reminderHours}</Text>
                   <View style={styles.timeSlots}>
                     {[8, 10, 12, 14, 16, 18, 20, 22].map((hour) => {
                       const isSelected = reminderHours.includes(hour);
