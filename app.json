@@ -27,6 +27,7 @@
       ]
     },
     "notification": {
+      "icon": "./assets/notification-icon.png",
       "color": "#00BCD4",
       "androidMode": "default",
       "androidCollapsedTitle": "Caloria Hatırlatıcıları"
