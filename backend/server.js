@@ -331,7 +331,8 @@ app.get('/api/meals', authenticateToken, async (req, res) => {
 
     if (date) {
       // Try to use date field first, fallback to created_at if date is null
-      query += ' AND (date = ? OR (date IS NULL AND DATE(created_at) = DATE(?)))';
+      // Use string comparison instead of DATE() function for compatibility
+      query += ' AND (date = ? OR (date IS NULL AND DATE_FORMAT(created_at, "%Y-%m-%d") = ?))';
       params.push(date);
       params.push(date);
     }
@@ -2539,7 +2540,8 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
     
     query += ` ORDER BY up.total_xp DESC LIMIT ?`;
     
-    const [results] = await promisePool.execute(query, [parseInt(limit)]);
+    const limitValue = parseInt(limit) || 10;
+    const [results] = await promisePool.execute(query, [limitValue]);
     
     // Add rank manually
     const leaderboardWithRank = results.map((user, index) => ({
