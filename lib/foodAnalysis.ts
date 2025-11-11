@@ -45,12 +45,17 @@ const imageToBase64 = async (imageUri: string): Promise<string> => {
 export const analyzeFoodImage = async (imageUri: string): Promise<FoodAnalysis> => {
   try {
     console.log('🤖 Analyzing image with Python AI backend...');
+    console.log('🔗 Python Backend URL:', PYTHON_BACKEND_URL);
     
     // Convert image to base64
     const base64Image = await imageToBase64(imageUri);
+    console.log('📸 Image converted to base64, length:', base64Image.length);
     
     // Send to Python backend
-    const response = await fetch(`${PYTHON_BACKEND_URL}/analyze-food`, {
+    const endpoint = `${PYTHON_BACKEND_URL}/api/analyze-food`;
+    console.log('📡 Sending request to:', endpoint);
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

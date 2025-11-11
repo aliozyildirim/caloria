@@ -14,7 +14,7 @@ const ENV = {
   },
   prod: {
     apiUrl: 'http://caloria.qrsef.com/api',
-    pythonApiUrl: 'http://caloria.qrsef.com/api',
+    pythonApiUrl: 'http://caloria.qrsef.com:5001',
     wsUrl: 'ws://caloria.qrsef.com',
   },
 };
