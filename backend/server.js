@@ -331,7 +331,7 @@ app.get('/api/meals', authenticateToken, async (req, res) => {
 
     if (date) {
       // Try to use date field first, fallback to created_at if date is null
-      query += ' AND (date = ? OR (date IS NULL AND DATE(created_at) = ?))';
+      query += ' AND (date = ? OR (date IS NULL AND DATE(created_at) = DATE(?)))';
       params.push(date);
       params.push(date);
     }

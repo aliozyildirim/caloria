@@ -28,6 +28,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
+# Increase max content length to 50MB for image uploads
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
+
 # Database configuration
 app.config['MYSQL_HOST'] = os.getenv('DB_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.getenv('DB_USER', 'root')
