@@ -31,6 +31,18 @@ CORS(app)
 # Increase max content length to 50MB for image uploads
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB
 
+# Request logging middleware
+@app.before_request
+def log_request():
+    print(f"📥 {request.method} {request.path} - {request.remote_addr}")
+    if request.method == 'POST' and request.is_json:
+        print(f"📦 Body keys: {list(request.json.keys()) if request.json else 'None'}")
+
+@app.after_request
+def log_response(response):
+    print(f"📤 {request.method} {request.path} - Status: {response.status_code}")
+    return response
+
 # Database configuration
 app.config['MYSQL_HOST'] = os.getenv('DB_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.getenv('DB_USER', 'root')
