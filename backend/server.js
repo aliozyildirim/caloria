@@ -2188,7 +2188,7 @@ app.post('/api/notifications/register-token', authenticateToken, async (req, res
   try {
     console.log('🔔 POST /api/notifications/register-token - User:', req.user.userId);
     const { token, device_type = 'ios' } = req.body;
-    console.log('📱 Push token to register:', { token: token?.substring(0, 20) + '...', device_type });
+    console.log('📱 Push token to register:', { token: token ? token.substring(0, 20) + '...' : 'null', device_type });
     
     if (!token) {
       return res.status(400).json({ error: 'Push token is required' });
@@ -2489,7 +2489,7 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
     
     res.json({
       leaderboard: leaderboardWithRank,
-      userRank: userRank[0]?.rank || null,
+      userRank: (userRank[0] && userRank[0].rank) || null,
       period: period
     });
   } catch (error) {
@@ -2520,7 +2520,7 @@ app.get('/api/rewards-shop', authenticateToken, async (req, res) => {
     
     res.json({
       rewards: rewards,
-      userXP: userXp[0]?.total_xp || 0,
+      userXP: (userXp[0] && userXp[0].total_xp) || 0,
       categories: ['avatar', 'theme', 'badge', 'feature', 'discount']
     });
   } catch (error) {
@@ -2625,7 +2625,7 @@ app.post('/api/user/daily-bonus', authenticateToken, async (req, res) => {
       AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     `;
     const [streakResult] = await promisePool.execute(streakQuery, [userId]);
-    const streak = streakResult[0]?.streak || 0;
+    const streak = (streakResult[0] && streakResult[0].streak) || 0;
     
     const bonusXP = Math.min(10 + (streak * 2), 50); // 10-50 XP based on streak
     
@@ -4026,7 +4026,7 @@ app.post('/api/chat/nutritionist', authenticateToken, async (req, res) => {
       }
     } catch (pythonError) {
       // Python backend yanıt vermezse basit bir fallback yanıt ver
-      const userMessage = messages[messages.length - 1]?.content || '';
+      const userMessage = (messages.length > 0 && messages[messages.length - 1] && messages[messages.length - 1].content) || '';
       const fallbackResponses = [
         'Merhaba! Beslenme konularında size yardımcı olmaya hazırım. Ne konuda danışmak istiyorsunuz?',
         'Sağlıklı beslenme konusunda size yardımcı olabilirim. Sorunuz nedir?',
@@ -4072,9 +4072,9 @@ app.post('/api/chat', authenticateToken, async (req, res) => {
       content: `Sen Caloria uygulamasının beslenme uzmanısın. Türkçe konuşan, arkadaş canlısı ve yardımsever bir asistansın.
 
 Kullanıcı Bilgileri:
-- Günlük Kalori Hedefi: ${userNutrition?.daily_calories || 'Belirtilmemiş'}
-- Diyet Tipi: ${userNutrition?.diet_type || 'Standart'}
-- Kısıtlamalar: ${userNutrition?.restrictions || 'Yok'}
+- Günlük Kalori Hedefi: ${(userNutrition && userNutrition.daily_calories) || 'Belirtilmemiş'}
+- Diyet Tipi: ${(userNutrition && userNutrition.diet_type) || 'Standart'}
+- Kısıtlamalar: ${(userNutrition && userNutrition.restrictions) || 'Yok'}
 
 Görevlerin:
 1. Beslenme, diyet ve fitness konularında danışmanlık yap
