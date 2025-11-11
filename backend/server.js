@@ -129,7 +129,19 @@ app.post('/api/auth/register', async (req, res) => {
     const [result] = await promisePool.execute(insertQuery, [email, username, hashedPassword, fullName]);
 
     const userId = result.insertId;
-    const token = jwt.sign({ userId: userId, email, username }, process.env.JWT_SECRET || 'caloria_secret', { expiresIn: '7d' });
+    
+    // Debug JWT
+    console.log('JWT_SECRET type:', typeof process.env.JWT_SECRET);
+    console.log('JWT_SECRET value:', process.env.JWT_SECRET ? 'exists' : 'missing');
+    
+    const jwtSecret = process.env.JWT_SECRET || 'caloria_secret';
+    const jwtPayload = { userId: userId, email, username };
+    const jwtOptions = { expiresIn: '7d' };
+    
+    console.log('JWT payload:', jwtPayload);
+    console.log('JWT options:', jwtOptions);
+    
+    const token = jwt.sign(jwtPayload, jwtSecret, jwtOptions);
 
     res.status(201).json({
       message: 'User created successfully',
