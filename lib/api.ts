@@ -361,7 +361,7 @@ class ApiService {
   static async getUserProfile() {
     const token = await AuthService.getTokenAsync();
 
-    const response = await fetch('http://localhost:5001/api/user/profile', {
+    const response = await fetch(`${config.pythonApiUrl}/user/profile`, {
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -379,7 +379,7 @@ class ApiService {
   static async updateUserProfile(data: any) {
     const token = await AuthService.getTokenAsync();
 
-    const response = await fetch('http://localhost:5001/api/user/profile', {
+    const response = await fetch(`${config.pythonApiUrl}/user/profile`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

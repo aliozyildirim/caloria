@@ -4042,8 +4042,9 @@ app.post('/api/chat/nutritionist', authenticateToken, async (req, res) => {
     }
 
     // Python backend'e yönlendir (Node.js 18+ built-in fetch kullanılıyor)
+    const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || 'http://localhost:5001';
     try {
-      const pythonResponse = await fetch('http://localhost:5001/nutritionist/chat', {
+      const pythonResponse = await fetch(`${pythonBackendUrl}/nutritionist/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
