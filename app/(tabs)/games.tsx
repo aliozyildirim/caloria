@@ -1067,21 +1067,21 @@ export default function GamesScreen() {
   };
 
   const getCategoryName = (category: string) => {
-    switch (category) {
-      case 'vegetables': return 'Sebze';
-      case 'water': return 'Su';
-      case 'exercise': return 'Egzersiz';
-      case 'healthy_fats': return 'Sağlıklı Yağlar';
-      case 'no_sugar': return 'Şeker';
-      case 'sleep': return 'Uyku';
-      case 'meditation': return 'Meditasyon';
-      case 'avatar': return 'Avatar';
-      case 'theme': return 'Tema';
-      case 'badge': return 'Rozet';
-      case 'feature': return 'Özellik';
-      case 'discount': return 'İndirim';
-      default: return 'Diğer';
-    }
+    const categories: any = {
+      vegetables: (t.games as any).categoryVegetables || 'Sebze',
+      water: (t.games as any).categoryWater || 'Su',
+      exercise: (t.games as any).categoryExercise || 'Egzersiz',
+      healthy_fats: (t.games as any).categoryHealthyFats || 'Sağlıklı Yağlar',
+      no_sugar: (t.games as any).categoryNoSugar || 'Şeker',
+      sleep: (t.games as any).categorySleep || 'Uyku',
+      meditation: (t.games as any).categoryMeditation || 'Meditasyon',
+      avatar: (t.games as any).categoryAvatar || 'Avatar',
+      theme: (t.games as any).categoryTheme || 'Tema',
+      badge: (t.games as any).categoryBadge || 'Rozet',
+      feature: (t.games as any).categoryFeature || 'Özellik',
+      discount: (t.games as any).categoryDiscount || 'İndirim',
+    };
+    return categories[category] || (t.games as any).categoryOther || 'Diğer';
   };
 
   // Helper function to get localized text
@@ -2053,7 +2053,7 @@ export default function GamesScreen() {
                                       reward.is_purchased && styles.purchaseButtonPurchased,
                                       (!reward.is_purchased && rewardsData.userXP < reward.xp_cost) && styles.purchaseButtonDisabled
                                     ]}
-                                    onPress={() => purchaseReward(reward.id, reward.name, reward.xp_cost)}
+                                    onPress={() => purchaseReward(reward.id, getLocalizedText(reward.name), reward.xp_cost)}
                                     disabled={reward.is_purchased || rewardsData.userXP < reward.xp_cost}
                                   >
                                     {reward.is_purchased ? (
@@ -2199,9 +2199,9 @@ export default function GamesScreen() {
                             </View>
                           </View>
                           
-                          <Text style={styles.myRewardName}>{reward.name}</Text>
+                          <Text style={styles.myRewardName}>{getLocalizedText(reward.name)}</Text>
                           <Text style={styles.myRewardDescription} numberOfLines={2}>
-                            {reward.description}
+                            {getLocalizedText(reward.description)}
                           </Text>
                           
                           <View style={styles.myRewardFooter}>
@@ -2312,14 +2312,6 @@ const styles = StyleSheet.create({
     height: '100%',
     backgroundColor: '#4CAF50',
     borderRadius: 4,
-  },
-  xpRewardListItemProgressPercentage: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  xpRewardListItemProgressText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
   },
   currentRoomCard: {
     margin: 16,
@@ -2510,27 +2502,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 4,
-  },
-  xpRewardListItemProgressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    borderRadius: 4,
-    marginHorizontal: 8,
-    overflow: 'hidden',
-  },
-  xpRewardListItemProgressFill: {
-    height: '100%',
-    backgroundColor: '#4CAF50',
-    borderRadius: 4,
-  },
-  xpRewardListItemProgressPercentage: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
-  },
-  xpRewardListItemProgressText: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
   },
 
   // Game Screen Styles
@@ -3515,10 +3486,11 @@ const styles = StyleSheet.create({
   categoryRewards: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
+    paddingHorizontal: 4,
   },
   rewardCard: {
-    width: width / 2 - 24,
+    width: (width - 48) / 2,
     backgroundColor: '#f8f9fa',
     borderRadius: 16,
     padding: 14,
@@ -3630,13 +3602,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Add missing XP Action styles
-  xpActionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 16,
-  },
   xpActionButton: {
     backgroundColor: 'rgba(255,255,255,0.2)',
     paddingVertical: 8,
@@ -3737,10 +3702,11 @@ const styles = StyleSheet.create({
   myRewardsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
+    paddingHorizontal: 4,
   },
   myRewardCard: {
-    width: width / 2 - 24,
+    width: (width - 48) / 2,
     borderRadius: 16,
     overflow: 'hidden',
     elevation: 3,

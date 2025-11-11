@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import ApiService from '../lib/api';
+import { useLanguage } from '../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -45,6 +46,7 @@ const MEAL_TYPE_EMOJIS = {
   snack: '🍿'
 };
 
+// These will be replaced with translations
 const MEAL_TYPE_NAMES = {
   breakfast: 'Kahvaltı',
   lunch: 'Öğle Yemeği',
@@ -55,12 +57,38 @@ const MEAL_TYPE_NAMES = {
 const DAY_NAMES = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
 export default function MealPlanScreen() {
+  const { t, language } = useLanguage();
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState(0);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [weekDates, setWeekDates] = useState<string[]>([]);
+
+  // Localized meal type names
+  const getMealTypeName = (type: string) => {
+    switch (type) {
+      case 'breakfast': return t.diets.breakfast;
+      case 'lunch': return t.diets.lunch;
+      case 'dinner': return t.diets.dinner;
+      case 'snack': return t.diets.snack;
+      default: return t.diets.meal;
+    }
+  };
+
+  // Localized day names
+  const getDayName = (index: number) => {
+    const days = [
+      t.diets.monday,
+      t.diets.tuesday,
+      t.diets.wednesday,
+      t.diets.thursday,
+      t.diets.friday,
+      t.diets.saturday,
+      t.diets.sunday
+    ];
+    return days[index] || t.diets.day;
+  };
 
   useEffect(() => {
     loadMealPlans();
@@ -139,7 +167,7 @@ export default function MealPlanScreen() {
       
     } catch (error) {
       console.error('Error loading meal plans:', error);
-      Alert.alert('Hata', 'Yemek planları yüklenemedi. Henüz aktif diyet planınız yok olabilir.');
+      Alert.alert(t.common.error, t.diets.plansCreateError);
       setMealPlans([]);
     } finally {
       setIsLoading(false);
@@ -154,21 +182,21 @@ export default function MealPlanScreen() {
 
   const handleGeneratePlans = async () => {
     Alert.alert(
-      'Yemek Planları Oluştur',
-      'Aktif diyet planınız için yemek planları oluşturulsun mu? Bu işlem mevcut planları değiştirebilir.',
+      t.diets.createMealPlans,
+      t.diets.createMealPlansDesc,
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Oluştur',
+          text: t.diets.create,
           onPress: async () => {
             try {
               setIsLoading(true);
               const result = await ApiService.generateMealPlans();
-              Alert.alert('Başarılı!', `${result.totalPlans} yemek planı oluşturuldu!`);
+              Alert.alert(t.diets.plansCreated, t.diets.plansCreatedDesc.replace('{n}', result.totalPlans.toString()));
               loadMealPlans();
             } catch (error) {
               console.error('Error generating meal plans:', error);
-              Alert.alert('Hata', 'Yemek planları oluşturulamadı. Aktif diyet planınız olduğundan emin olun.');
+              Alert.alert(t.common.error, t.diets.plansCreateError);
             } finally {
               setIsLoading(false);
             }
@@ -179,28 +207,50 @@ export default function MealPlanScreen() {
   };
 
   const handleCompleteMeal = async (mealPlan: MealPlan) => {
-    // Check if meal date is in the future
-    const mealDate = new Date(mealPlan.date);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    mealDate.setHours(0, 0, 0, 0);
+    // Check if meal date is in the future - allow today and past dates
+    // Use selectedDate if available (more reliable), otherwise use mealPlan.date
+    const dateToCheck = selectedDate || mealPlan.date;
     
-    if (mealDate > today) {
+    // Parse date properly to avoid timezone issues
+    let mealDateStr: string;
+    if (dateToCheck instanceof Date) {
+      mealDateStr = dateToCheck.toISOString().split('T')[0];
+    } else if (typeof dateToCheck === 'string') {
+      mealDateStr = dateToCheck.split('T')[0]; // YYYY-MM-DD
+    } else {
+      mealDateStr = String(dateToCheck).split('T')[0];
+    }
+    
+    // Parse using UTC to avoid timezone issues
+    const [year, month, day] = mealDateStr.split('-').map(Number);
+    const mealDate = new Date(Date.UTC(year, month - 1, day));
+    
+    // Get today's date in UTC
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number);
+    const todayDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay));
+    
+    // Only block if meal date is strictly in the future (allow today and past)
+    // mealDate > todayDate means future, mealDate <= todayDate means today or past (can complete)
+    const isFuture = mealDate.getTime() > todayDate.getTime();
+    
+    if (isFuture) {
       Alert.alert(
-        'Gelecek Tarih',
-        'Gelecek günlerin öğünlerini şimdiden tamamlayamazsınız. Lütfen öğün gününü bekleyin.',
-        [{ text: 'Tamam', style: 'default' }]
+        t.diets.futureDate,
+        t.diets.futureDateDesc,
+        [{ text: t.common.ok, style: 'default' }]
       );
       return;
     }
     
     Alert.alert(
-      'Öğünü Tamamla',
-      `"${mealPlan.planned_food_name}" öğününüz tamamlandı mı?`,
+      t.diets.completeMeal,
+      t.diets.completeMealDesc.replace('{name}', mealPlan.planned_food_name || ''),
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Tamamlandı',
+          text: t.diets.completed,
           onPress: async () => {
             try {
               const result = await ApiService.completeMealPlan(mealPlan.id, {
@@ -212,8 +262,8 @@ export default function MealPlanScreen() {
               });
               
               // Show success message with calorie info
-              const calorieMessage = result.calories ? ` (${result.calories} kalori eklendi)` : '';
-              Alert.alert('Başarılı! 🎉', `Öğün tamamlandı ve kalori takibinize eklendi!${calorieMessage}`);
+              const calorieMessage = result.calories ? ` (${result.calories} ${t.diets.kcal} ${t.common.added || 'eklendi'})` : '';
+              Alert.alert(t.diets.mealCompleted, t.diets.mealCompletedDesc.replace('{calories}', calorieMessage));
               
               // Refresh meal plans
               loadMealPlans();
@@ -226,10 +276,10 @@ export default function MealPlanScreen() {
               console.error('Error completing meal:', error);
               
               // Better error handling
-              let errorMessage = 'Öğün tamamlanamadı.';
+              let errorMessage = t.diets.mealCompleteError;
               
               if (error.message && error.message.includes('404')) {
-                errorMessage = 'Öğün bulunamadı. Sayfa yenilenecek.';
+                errorMessage = t.diets.mealNotFound;
                 // Refresh the page if meal not found
                 loadMealPlans();
               } else if (error.response?.data?.error) {
@@ -238,7 +288,7 @@ export default function MealPlanScreen() {
                 errorMessage = error;
               }
               
-              Alert.alert('Hata', errorMessage);
+              Alert.alert(t.common.error, errorMessage);
             }
           }
         }
@@ -271,16 +321,18 @@ export default function MealPlanScreen() {
   };
 
   const getWeekTitle = () => {
-    if (selectedWeek === 0) return 'Bu Hafta';
-    if (selectedWeek === -1) return 'Geçen Hafta';
-    if (selectedWeek === 1) return 'Gelecek Hafta';
-    return selectedWeek > 0 ? `${selectedWeek} Hafta Sonra` : `${Math.abs(selectedWeek)} Hafta Önce`;
+    if (selectedWeek === 0) return t.diets.thisWeek;
+    if (selectedWeek === -1) return t.diets.lastWeek;
+    if (selectedWeek === 1) return t.diets.nextWeek;
+    return selectedWeek > 0 
+      ? t.diets.weeksLater.replace('{n}', selectedWeek.toString())
+      : t.diets.weeksAgo.replace('{n}', Math.abs(selectedWeek).toString());
   };
 
   const formatDate = (dateString: string, dayIndex: number) => {
     if (!dateString) {
       return {
-        dayName: DAY_NAMES[dayIndex] || 'Gün',
+        dayName: getDayName(dayIndex),
         dayNumber: '?',
         isToday: false
       };
@@ -294,14 +346,14 @@ export default function MealPlanScreen() {
       const dayNumber = date.getDate();
       
       return {
-        dayName: DAY_NAMES[dayIndex] || 'Gün',
+        dayName: getDayName(dayIndex),
         dayNumber,
         isToday
       };
     } catch (error) {
       console.error('Date formatting error:', error);
       return {
-        dayName: DAY_NAMES[dayIndex] || 'Gün',
+        dayName: getDayName(dayIndex),
         dayNumber: '?',
         isToday: false
       };
@@ -321,7 +373,7 @@ export default function MealPlanScreen() {
           <SafeAreaView style={styles.safeAreaContainer}>
             <View style={styles.loadingContainer}>
               <Text style={styles.loadingEmoji}>📅</Text>
-              <Text style={styles.loadingText}>Yemek Planları Yükleniyor...</Text>
+              <Text style={styles.loadingText}>{t.diets.loadingMealPlans}</Text>
             </View>
           </SafeAreaView>
         </LinearGradient>
@@ -346,7 +398,7 @@ export default function MealPlanScreen() {
             >
               <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>📅 Yemek Planım</Text>
+            <Text style={styles.headerTitle}>{t.diets.myMealPlan}</Text>
             <TouchableOpacity 
               style={styles.generateButton} 
               onPress={handleGeneratePlans}
@@ -430,11 +482,11 @@ export default function MealPlanScreen() {
             {selectedDayMeals.length === 0 && (
               <View style={styles.noPlansContainer}>
                 <Text style={styles.noPlansEmoji}>🍽️</Text>
-                <Text style={styles.noPlansTitle}>Bu Gün İçin Plan Yok</Text>
+                <Text style={styles.noPlansTitle}>{t.diets.noPlansForToday}</Text>
                 <Text style={styles.noPlansText}>
                   {selectedDate ? 
-                    'Bu güne ait yemek planı bulunmuyor.' : 
-                    'Aktif diyet planınız için yemek planları oluşturmak ister misiniz?'
+                    t.diets.noPlansForTodayDesc : 
+                    t.diets.noPlansDesc
                   }
                 </Text>
                 {!selectedDate && (
@@ -442,7 +494,7 @@ export default function MealPlanScreen() {
                     style={styles.generatePlansButton}
                     onPress={handleGeneratePlans}
                   >
-                    <Text style={styles.generatePlansButtonText}>Plan Oluştur</Text>
+                    <Text style={styles.generatePlansButtonText}>{t.diets.createPlans}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -461,12 +513,21 @@ export default function MealPlanScreen() {
                   try {
                     const meal = safeMealData(mealRaw);
                     
-                    // Check if meal is in the future
-                    const mealDate = new Date(selectedDate);
+                    // Check if meal is in the future - allow today and past dates
+                    // Parse selectedDate properly (it's already a string in YYYY-MM-DD format)
+                    // Use UTC to avoid timezone issues
+                    const mealDateStr = selectedDate.split('T')[0]; // YYYY-MM-DD
+                    const [year, month, day] = mealDateStr.split('-').map(Number);
+                    const mealDate = new Date(Date.UTC(year, month - 1, day));
+                    
                     const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    mealDate.setHours(0, 0, 0, 0);
-                    const isFuture = mealDate > today;
+                    const todayStr = today.toISOString().split('T')[0]; // YYYY-MM-DD
+                    const [todayYear, todayMonth, todayDay] = todayStr.split('-').map(Number);
+                    const todayDate = new Date(Date.UTC(todayYear, todayMonth - 1, todayDay));
+                    
+                    // Only disable if meal date is strictly in the future (not today or past)
+                    // mealDate > todayDate means future, mealDate <= todayDate means today or past (can complete)
+                    const isFuture = mealDate.getTime() > todayDate.getTime();
                     
                     return (
                       <TouchableOpacity
@@ -492,7 +553,7 @@ export default function MealPlanScreen() {
                                 {MEAL_TYPE_EMOJIS[meal.meal_type as keyof typeof MEAL_TYPE_EMOJIS] || '🍽️'}
                               </Text>
                               <Text style={styles.mealType}>
-                                {MEAL_TYPE_NAMES[meal.meal_type as keyof typeof MEAL_TYPE_NAMES] || 'Öğün'}
+                                {getMealTypeName(meal.meal_type)}
                               </Text>
                             </View>
                             {meal.is_completed && (
@@ -511,25 +572,25 @@ export default function MealPlanScreen() {
                               <Text style={styles.nutritionValue}>
                                 {meal.planned_calories}
                               </Text>
-                              <Text style={styles.nutritionLabel}>kcal</Text>
+                              <Text style={styles.nutritionLabel}>{t.diets.kcal}</Text>
                             </View>
                             <View style={styles.nutritionItem}>
                               <Text style={styles.nutritionValue}>
                                 {meal.planned_protein}g
                               </Text>
-                              <Text style={styles.nutritionLabel}>protein</Text>
+                              <Text style={styles.nutritionLabel}>{t.diets.protein}</Text>
                             </View>
                             <View style={styles.nutritionItem}>
                               <Text style={styles.nutritionValue}>
                                 {meal.planned_carbs}g
                               </Text>
-                              <Text style={styles.nutritionLabel}>karbonhidrat</Text>
+                              <Text style={styles.nutritionLabel}>{t.diets.carbs}</Text>
                             </View>
                             <View style={styles.nutritionItem}>
                               <Text style={styles.nutritionValue}>
                                 {meal.planned_fat}g
                               </Text>
-                              <Text style={styles.nutritionLabel}>yağ</Text>
+                              <Text style={styles.nutritionLabel}>{t.diets.fat}</Text>
                             </View>
                           </View>
 
@@ -545,7 +606,7 @@ export default function MealPlanScreen() {
                     console.error('Meal render error:', mealError);
                     return (
                       <View key={`error-meal-${mealRaw?.id || Math.random()}`} style={styles.mealCard}>
-                        <Text style={styles.mealName}>Yemek yüklenemedi</Text>
+                        <Text style={styles.mealName}>{t.diets.mealLoadError}</Text>
                       </View>
                     );
                   }

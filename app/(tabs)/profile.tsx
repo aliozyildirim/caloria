@@ -23,6 +23,7 @@ import * as ImagePicker from 'expo-image-picker';
 import ApiService, { UserProfile, UserReward, Reward } from '../../lib/api';
 import AuthService from '../../lib/auth';
 import { useTheme } from '../../lib/ThemeProvider';
+import { useLanguage } from '../../lib/LanguageProvider';
 
 const { width } = Dimensions.get('window');
 
@@ -43,6 +44,7 @@ export default function ProfileScreen() {
 
   // Theme context
   const { theme, refreshTheme, hasFeature, setLocalTheme } = useTheme();
+  const { t, language } = useLanguage();
 
   // Form states
   const [showEditModal, setShowEditModal] = useState(false);
@@ -167,29 +169,29 @@ export default function ProfileScreen() {
   };
 
   const getBMICategory = (bmi: number) => {
-    if (bmi < 18.5) return { text: 'Zayıf', color: '#42A5F5', emoji: '📉' };
-    if (bmi < 25) return { text: 'Normal', color: '#4CAF50', emoji: '✅' };
-    if (bmi < 30) return { text: 'Fazla Kilolu', color: '#FFA726', emoji: '⚠️' };
-    return { text: 'Obez', color: '#FF6B6B', emoji: '🚨' };
+    if (bmi < 18.5) return { text: t.profile.bmiUnderweight, color: '#42A5F5', emoji: '📉' };
+    if (bmi < 25) return { text: t.profile.bmiNormal, color: '#4CAF50', emoji: '✅' };
+    if (bmi < 30) return { text: t.profile.bmiOverweight, color: '#FFA726', emoji: '⚠️' };
+    return { text: t.profile.bmiObese, color: '#FF6B6B', emoji: '🚨' };
   };
 
   const getActivityText = (level?: string) => {
     switch (level) {
-      case 'sedentary': return { text: 'Hareketsiz', emoji: '🛋️' };
-      case 'light': return { text: 'Az Aktif', emoji: '🚶' };
-      case 'moderate': return { text: 'Orta Aktif', emoji: '🏃' };
-      case 'active': return { text: 'Aktif', emoji: '🏋️' };
-      case 'very_active': return { text: 'Çok Aktif', emoji: '🏃‍♂️' };
-      default: return { text: 'Belirlenmemiş', emoji: '❓' };
+      case 'sedentary': return { text: t.profile.activitySedentary, emoji: '🛋️' };
+      case 'light': return { text: t.profile.activityLight, emoji: '🚶' };
+      case 'moderate': return { text: t.profile.activityModerate, emoji: '🏃' };
+      case 'active': return { text: t.profile.activityActive, emoji: '🏋️' };
+      case 'very_active': return { text: t.profile.activityVeryActive, emoji: '🏃‍♂️' };
+      default: return { text: t.profile.activityUndefined, emoji: '❓' };
     }
   };
 
   const getGoalText = (goal?: string) => {
     switch (goal) {
-      case 'lose': return { text: 'Kilo Ver', emoji: '📉', color: '#FF6B6B' };
-      case 'maintain': return { text: 'Koru', emoji: '⚖️', color: '#4CAF50' };
-      case 'gain': return { text: 'Kilo Al', emoji: '📈', color: '#42A5F5' };
-      default: return { text: 'Belirlenmemiş', emoji: '❓', color: '#666' };
+      case 'lose': return { text: t.profile.goalLose, emoji: '📉', color: '#FF6B6B' };
+      case 'maintain': return { text: t.profile.goalMaintain, emoji: '⚖️', color: '#4CAF50' };
+      case 'gain': return { text: t.profile.goalGain, emoji: '📈', color: '#42A5F5' };
+      default: return { text: t.profile.goalUndefined, emoji: '❓', color: '#666' };
     }
   };
 
@@ -221,12 +223,12 @@ export default function ProfileScreen() {
 
   const handleLogout = async () => {
     Alert.alert(
-      'Çıkış Yap',
-      'Hesabınızdan çıkış yapmak istediğinizden emin misiniz?',
+      t.profile.logoutConfirm,
+      t.profile.logoutConfirmDesc,
       [
-        { text: 'İptal', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         {
-          text: 'Çıkış Yap',
+          text: t.profile.logout,
           style: 'destructive',
           onPress: async () => {
             try {
@@ -234,7 +236,7 @@ export default function ProfileScreen() {
               router.replace('/login');
             } catch (error) {
               console.error('Logout error:', error);
-              Alert.alert('Hata', 'Çıkış yapılırken bir hata oluştu');
+              Alert.alert(t.common.error, t.profile.logoutError);
             }
           }
         },
@@ -252,7 +254,7 @@ export default function ProfileScreen() {
   const requestPermissions = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin Gerekli', 'Fotoğraf seçmek için galeri izni gereklidir.');
+      Alert.alert(t.profile.permissionRequired, t.profile.galleryPermission);
       return false;
     }
     return true;
@@ -265,7 +267,7 @@ export default function ProfileScreen() {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['İptal', 'Kameradan Çek', 'Galeriden Seç'],
+          options: [t.common.cancel, t.profile.takePhoto, t.profile.selectFromGallery],
           cancelButtonIndex: 0,
         },
         (buttonIndex) => {
@@ -278,12 +280,12 @@ export default function ProfileScreen() {
       );
     } else {
       Alert.alert(
-        'Profil Fotoğrafı Seç',
-        'Fotoğrafı nereden seçmek istiyorsunuz?',
+        t.profile.selectPhoto,
+        t.profile.selectPhotoDesc,
         [
-          { text: 'İptal', style: 'cancel' },
-          { text: 'Kamera', onPress: openCamera },
-          { text: 'Galeri', onPress: openImageLibrary },
+          { text: t.common.cancel, style: 'cancel' },
+          { text: t.profile.camera, onPress: openCamera },
+          { text: t.profile.gallery, onPress: openImageLibrary },
         ]
       );
     }
@@ -292,7 +294,7 @@ export default function ProfileScreen() {
   const openCamera = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('İzin Gerekli', 'Kamera kullanmak için izin gereklidir.');
+      Alert.alert(t.profile.permissionRequired, t.profile.cameraPermission);
       return;
     }
 
@@ -327,14 +329,14 @@ export default function ProfileScreen() {
       
       // In a real app, you would upload the image to a server
       // For now, we'll just store it locally
-      Alert.alert('Başarılı!', 'Profil fotoğrafınız güncellendi.');
+      Alert.alert(t.profile.photoUpdated, t.profile.photoUpdatedDesc);
       
       // You could also update the profile via API:
       // await ApiService.updateUserProfile({ avatar: imageUri });
       
     } catch (error) {
       console.error('Error updating profile image:', error);
-      Alert.alert('Hata', 'Profil fotoğrafı güncellenirken bir hata oluştu.');
+      Alert.alert(t.common.error, t.profile.photoUpdateError);
     }
   };
 
@@ -373,11 +375,11 @@ export default function ProfileScreen() {
         dailyFatGoal: parseInt(formData.dailyFatGoal) || 0
       });
       
-      Alert.alert('Başarılı!', 'Profil bilgileriniz kaydedildi.');
+      Alert.alert(t.profile.profileSaved, t.profile.profileSavedDesc);
       setShowEditModal(false);
       loadProfileData();
     } catch (error) {
-      Alert.alert('Hata!', 'Profil kaydedilemedi.');
+      Alert.alert(t.common.error, t.profile.profileSaveError);
     }
   };
 
@@ -426,7 +428,7 @@ export default function ProfileScreen() {
                   
                   <View style={styles.userInfo}>
                     <Text style={styles.userName}>
-                      {profile?.name || 'Kullanıcı'}
+                      {profile?.name || t.profile.user}
                     </Text>
                     <Text style={styles.userEmail}>
                       {AuthService.getCurrentUser()?.email || 'user@example.com'}
@@ -438,45 +440,15 @@ export default function ProfileScreen() {
                   </View>
                 </View>
 
-                <TouchableOpacity 
-                  style={[styles.themeButton, { backgroundColor: theme.accentColor }]}
-                  onPress={() => {
-                    console.log('Navigating to challenges screen with rewards shop...');
-                    router.push({ 
-                      pathname: '/(tabs)/games', 
-                      params: { openModal: 'shop' } 
-                      });
-                  }}
-                >
-                  <Ionicons name="color-palette-outline" size={20} color="white" />
-                </TouchableOpacity>
-              </View>
-
-              {/* Tema Toggle - Basit */}
-              <View style={[styles.themeToggleSection, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)' }]}>
-                <View style={styles.themeToggleRow}>
-                  <View style={styles.themeToggleLeft}>
-                    <Ionicons 
-                      name={theme.textColor === '#ffffff' ? 'moon' : 'sunny'} 
-                      size={24} 
-                      color={theme.textColor === '#ffffff' ? 'white' : '#333'} 
-                    />
-                    <View style={styles.themeToggleText}>
-                      <Text style={[styles.themeToggleTitle, { color: theme.textColor === '#ffffff' ? 'white' : '#333' }]}>
-                        Karanlık Mod
-                      </Text>
-                      <Text style={[styles.themeToggleSubtitle, { color: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.7)' : '#666' }]}>
-                        {theme.textColor === '#ffffff' ? 'Aktif' : 'Kapalı'}
-                      </Text>
-                    </View>
-                  </View>
-                  <Switch
-                    value={theme.textColor === '#ffffff'}
-                    onValueChange={async (value) => {
+                <View style={styles.headerActions}>
+                  <TouchableOpacity 
+                    style={[styles.themeButton, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }]}
+                    onPress={async () => {
                       try {
-                        const newTheme = value ? 'dark' : 'light';
+                        const currentIsDark = theme.textColor === '#ffffff';
+                        const newTheme = !currentIsDark ? 'dark' : 'light';
                         
-                        if (value) {
+                        if (!currentIsDark) {
                           const hasDarkTheme = userRewards.some(reward => 
                             reward.name === 'Gece Teması' || reward.id === 2 || 
                             (reward.category === 'theme' && reward.name.includes('Gece'))
@@ -484,11 +456,11 @@ export default function ProfileScreen() {
                           
                           if (!hasDarkTheme) {
                             Alert.alert(
-                              'Gece Teması Kilitli 🔒', 
-                              'Gece temasını kullanmak için ödül mağazasından satın alın!',
+                              t.profile.darkModeLocked, 
+                              t.profile.darkModeLockedDesc,
                               [
-                                { text: 'Tamam', style: 'cancel' },
-                                { text: 'Mağazaya Git', onPress: () => router.push({ pathname: '/(tabs)/games', params: { openModal: 'shop' } }) }
+                                { text: t.common.ok, style: 'cancel' },
+                                { text: t.profile.goToShop, onPress: () => router.push({ pathname: '/(tabs)/games', params: { openModal: 'shop' } }) }
                               ]
                             );
                             return;
@@ -497,21 +469,37 @@ export default function ProfileScreen() {
                         
                         await ApiService.setUserTheme(newTheme);
                         await refreshTheme();
-                        Alert.alert('✅', `${value ? 'Karanlık' : 'Aydınlık'} mod aktif!`);
                       } catch (error) {
                         console.error('Theme switch error:', error);
-                        Alert.alert('Hata', 'Tema değiştirilemedi');
+                        Alert.alert(t.common.error, t.profile.themeChangeError);
                       }
                     }}
-                    trackColor={{ false: '#ccc', true: '#bb86fc' }}
-                    thumbColor={theme.textColor === '#ffffff' ? '#fff' : '#f4f3f4'}
-                  />
+                  >
+                    <Ionicons 
+                      name={theme.textColor === '#ffffff' ? 'moon' : 'sunny'} 
+                      size={20} 
+                      color={theme.textColor === '#ffffff' ? 'white' : '#333'} 
+                    />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.themeButton, { backgroundColor: theme.accentColor }]}
+                    onPress={() => {
+                      console.log('Navigating to challenges screen with rewards shop...');
+                      router.push({ 
+                        pathname: '/(tabs)/games', 
+                        params: { openModal: 'shop' } 
+                      });
+                    }}
+                  >
+                    <Ionicons name="color-palette-outline" size={20} color="white" />
+                  </TouchableOpacity>
                 </View>
               </View>
 
  {/* Body Stats Cards */}
               <View style={styles.bodyStatsSection}>
-                <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>📊 Vücut İstatistikleri</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>{t.profile.bodyStats}</Text>
                 <View style={styles.statsGrid}>
                   <View style={styles.statCard}>
                     <LinearGradient
@@ -520,7 +508,7 @@ export default function ProfileScreen() {
                     >
                       <Text style={styles.statEmoji}>⚖️</Text>
                       <Text style={styles.statValue}>{profile?.weight || 0}kg</Text>
-                      <Text style={styles.statLabel}>Mevcut Kilo</Text>
+                      <Text style={styles.statLabel}>{t.profile.currentWeight}</Text>
                     </LinearGradient>
                   </View>
 
@@ -531,7 +519,7 @@ export default function ProfileScreen() {
                     >
                       <Text style={styles.statEmoji}>📏</Text>
                       <Text style={styles.statValue}>{profile?.height || 0}cm</Text>
-                      <Text style={styles.statLabel}>Boy</Text>
+                      <Text style={styles.statLabel}>{t.profile.heightLabel}</Text>
                     </LinearGradient>
                   </View>
 
@@ -542,7 +530,7 @@ export default function ProfileScreen() {
                     >
                       <Text style={styles.statEmoji}>🎯</Text>
                       <Text style={styles.statValue}>{profile?.target_weight || 0}kg</Text>
-                      <Text style={styles.statLabel}>Hedef Kilo</Text>
+                      <Text style={styles.statLabel}>{t.profile.targetWeight}</Text>
                     </LinearGradient>
                   </View>
 
@@ -562,12 +550,12 @@ export default function ProfileScreen() {
 
               {/* Daily Goals */}
               <View style={styles.dailyGoalsSection}>
-                <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>🎯 Günlük Hedefler</Text>
+                <Text style={[styles.sectionTitle, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>{t.profile.dailyGoals}</Text>
                 <View style={styles.goalsContainer}>
                   <View style={[styles.goalItem, { backgroundColor: theme.textColor === '#ffffff' ? 'rgba(255,255,255,0.1)' : theme.cardColor + '40' }]}>
                     <View style={styles.goalHeader}>
                       <Text style={styles.goalEmoji}>🔥</Text>
-                      <Text style={[styles.goalLabel, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>Kalori</Text>
+                      <Text style={[styles.goalLabel, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>{t.profile.calories}</Text>
                     </View>
                     <Text style={[styles.goalValue, { color: theme.textColor === '#ffffff' ? 'white' : theme.textColor }]}>
                       {Math.round(todayStats.totalCalories || 0)} / {profile?.daily_calorie_goal || 2000}
@@ -588,7 +576,7 @@ export default function ProfileScreen() {
                   <View style={styles.goalItem}>
                     <View style={styles.goalHeader}>
                       <Text style={styles.goalEmoji}>💪</Text>
-                      <Text style={styles.goalLabel}>Protein</Text>
+                      <Text style={styles.goalLabel}>{t.profile.protein}</Text>
                     </View>
                     <Text style={styles.goalValue}>
                       {Math.round(todayStats.totalProtein || 0)}g / {profile?.daily_protein_goal || 150}g
@@ -609,7 +597,7 @@ export default function ProfileScreen() {
                   <View style={styles.goalItem}>
                     <View style={styles.goalHeader}>
                       <Text style={styles.goalEmoji}>🌾</Text>
-                      <Text style={styles.goalLabel}>Karbonhidrat</Text>
+                      <Text style={styles.goalLabel}>{t.profile.carbs}</Text>
                     </View>
                     <Text style={styles.goalValue}>
                       {Math.round(todayStats.totalCarbs || 0)}g / {profile?.daily_carbs_goal || 250}g
@@ -630,7 +618,7 @@ export default function ProfileScreen() {
                   <View style={styles.goalItem}>
                     <View style={styles.goalHeader}>
                       <Text style={styles.goalEmoji}>🥑</Text>
-                      <Text style={styles.goalLabel}>Yağ</Text>
+                      <Text style={styles.goalLabel}>{t.profile.fat}</Text>
                     </View>
                     <Text style={styles.goalValue}>
                       {Math.round(todayStats.totalFat || 0)}g / {profile?.daily_fat_goal || 67}g
@@ -652,28 +640,28 @@ export default function ProfileScreen() {
 
               {/* Health Info */}
               <View style={styles.healthInfoSection}>
-                <Text style={styles.sectionTitle}>💡 Sağlık Bilgileri</Text>
+                <Text style={styles.sectionTitle}>{t.profile.healthInfo}</Text>
                 <View style={styles.healthCard}>
                   <LinearGradient
                     colors={['rgba(255,255,255,0.1)', 'rgba(255,255,255,0.05)']}
                     style={styles.healthGradient}
                   >
                     <View style={styles.healthItem}>
-                      <Text style={styles.healthLabel}>İdeal Kilo Aralığı</Text>
+                      <Text style={styles.healthLabel}>{t.profile.idealWeightRange}</Text>
                       <Text style={styles.healthValue}>
                         {idealWeight.min}kg - {idealWeight.max}kg
                       </Text>
                     </View>
                     
                     <View style={styles.healthItem}>
-                      <Text style={styles.healthLabel}>Yaş</Text>
-                      <Text style={styles.healthValue}>{profile?.age || 0} yaşında</Text>
+                      <Text style={styles.healthLabel}>{t.profile.ageLabel}</Text>
+                      <Text style={styles.healthValue}>{profile?.age || 0} {t.profile.yearsOld}</Text>
                     </View>
                     
                     <View style={styles.healthItem}>
-                      <Text style={styles.healthLabel}>Cinsiyet</Text>
+                      <Text style={styles.healthLabel}>{t.profile.gender}</Text>
                       <Text style={styles.healthValue}>
-                        {profile?.gender === 'male' ? 'Erkek' : '👩 Kadın'}
+                        {profile?.gender === 'male' ? t.profile.male : `👩 ${t.profile.female}`}
                       </Text>
                     </View>
                   </LinearGradient>
@@ -682,7 +670,7 @@ export default function ProfileScreen() {
 
               {/* Quick Actions */}
               <View style={styles.actionsSection}>
-                <Text style={styles.sectionTitle}>⚡ Hızlı İşlemler</Text>
+                <Text style={styles.sectionTitle}>{t.profile.quickActions}</Text>
                 <View style={styles.actionsGrid}>
                   <TouchableOpacity 
                     style={styles.actionButton}
@@ -693,7 +681,7 @@ export default function ProfileScreen() {
                       style={styles.actionGradient}
                     >
                       <Ionicons name="bulb" size={24} color="#fff" />
-                      <Text style={styles.actionText}>Beslenme Uzmanı</Text>
+                      <Text style={styles.actionText}>{t.profile.nutritionExpert}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
 
@@ -706,7 +694,7 @@ export default function ProfileScreen() {
                       style={styles.actionGradient}
                     >
                       <Ionicons name="settings" size={24} color="#fff" />
-                      <Text style={styles.actionText}>Ayarlar</Text>
+                      <Text style={styles.actionText}>{t.profile.settings}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
 
@@ -719,7 +707,7 @@ export default function ProfileScreen() {
                       style={styles.actionGradient}
                     >
                       <Ionicons name="analytics" size={24} color="#fff" />
-                      <Text style={styles.actionText}>İstatistikler</Text>
+                      <Text style={styles.actionText}>{t.profile.statistics}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
 
@@ -732,7 +720,7 @@ export default function ProfileScreen() {
                       style={styles.actionGradient}
                     >
                       <Ionicons name="restaurant" size={24} color="#fff" />
-                      <Text style={styles.actionText}>Diyet Planları</Text>
+                      <Text style={styles.actionText}>{t.profile.dietPlans}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
 
@@ -745,7 +733,7 @@ export default function ProfileScreen() {
                       style={styles.actionGradient}
                     >
                       <Ionicons name="log-out" size={24} color="#fff" />
-                      <Text style={styles.actionText}>Çıkış Yap</Text>
+                      <Text style={styles.actionText}>{t.profile.logout}</Text>
                     </LinearGradient>
                   </TouchableOpacity>
                 </View>
@@ -776,8 +764,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    marginBottom: 20,
+    padding: 16,
+    paddingRight: 12,
+    marginBottom: 16,
   },
   avatarSection: {
     flexDirection: 'row',
@@ -788,19 +777,19 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   avatarImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   avatarGradient: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
   },
@@ -819,15 +808,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   userName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
+    marginBottom: 3,
   },
   userEmail: {
-    fontSize: 14,
+    fontSize: 12,
     color: 'rgba(255,255,255,0.8)',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   userStats: {
     flexDirection: 'column',
@@ -837,10 +826,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: 'rgba(255,255,255,0.9)',
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 8,
+    marginLeft: 'auto',
+  },
   themeButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -853,20 +847,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bodyStatsSection: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
     color: '#fff',
-    marginBottom: 12,
-    paddingHorizontal: 20,
+    marginBottom: 10,
+    paddingHorizontal: 16,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: 16,
+    gap: 10,
   },
   statCard: {
     width: (width - 56) / 2,
@@ -883,20 +877,20 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 12,
   },
   statEmoji: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
     marginBottom: 4,
   },
+  statValue: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 2,
+  },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#fff',
     textAlign: 'center',
   },
@@ -907,35 +901,35 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dailyGoalsSection: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   goalsContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   goalItem: {
-    marginBottom: 16,
-    padding: 16,
+    marginBottom: 12,
+    padding: 12,
     backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
+    borderRadius: 10,
   },
   goalHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   goalEmoji: {
-    fontSize: 20,
-    marginRight: 8,
+    fontSize: 18,
+    marginRight: 6,
   },
   goalLabel: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: '#fff',
   },
   goalValue: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#fff',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   progressBar: {
     width: '100%',
@@ -949,91 +943,64 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   healthInfoSection: {
-    marginBottom: 24,
+    marginBottom: 18,
   },
   healthCard: {
-    marginHorizontal: 20,
+    marginHorizontal: 16,
   },
   healthGradient: {
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
   },
   healthItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   healthLabel: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#fff',
     fontWeight: '500',
   },
   healthValue: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#fff',
     fontWeight: 'bold',
   },
   actionsSection: {
-    marginBottom: 40,
+    marginBottom: 30,
   },
   actionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    gap: 12,
+    paddingHorizontal: 16,
+    gap: 10,
   },
   actionButton: {
     width: (width - 56) / 3,
-    height: 80,
-    borderRadius: 16,
+    height: 70,
+    borderRadius: 12,
     overflow: 'hidden',
-    elevation: 4,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   actionGradient: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 16,
+    padding: 12,
   },
   actionText: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '600',
     color: '#fff',
     marginTop: 4,
   },
   safeAreaContainer: {
     flex: 1,
-  },
-  themeToggleSection: {
-    padding: 20,
-    marginBottom: 20,
-    borderRadius: 16,
-  },
-  themeToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  themeToggleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  themeToggleText: {
-    flex: 1,
-  },
-  themeToggleTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  themeToggleSubtitle: {
-    fontSize: 13,
   },
 }); 
