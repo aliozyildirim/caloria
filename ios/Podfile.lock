@@ -139,8 +139,24 @@ PODS:
     - React-Core (= 0.73.6)
     - React-jsi (= 0.73.6)
     - ReactCommon/turbomodule/core (= 0.73.6)
+  - Firebase/CoreOnly (11.13.0):
+    - FirebaseCore (~> 11.13.0)
+  - FirebaseCore (11.13.0):
+    - FirebaseCoreInternal (~> 11.13.0)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/Logger (~> 8.1)
+  - FirebaseCoreInternal (11.13.0):
+    - "GoogleUtilities/NSData+zlib (~> 8.1)"
   - fmt (6.2.1)
   - glog (0.3.5)
+  - GoogleUtilities/Environment (8.1.0):
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Logger (8.1.0):
+    - GoogleUtilities/Environment
+    - GoogleUtilities/Privacy
+  - "GoogleUtilities/NSData+zlib (8.1.0)":
+    - GoogleUtilities/Privacy
+  - GoogleUtilities/Privacy (8.1.0)
   - hermes-engine (0.73.6):
     - hermes-engine/Pre-built (= 0.73.6)
   - hermes-engine/Pre-built (0.73.6)
@@ -1185,10 +1201,16 @@ PODS:
     - React-jsi (= 0.73.6)
     - React-logger (= 0.73.6)
     - React-perflogger (= 0.73.6)
-  - RNCAsyncStorage (1.24.0):
+  - RNCAsyncStorage (1.21.0):
     - React-Core
   - RNDateTimePicker (7.7.0):
     - React-Core
+  - RNFBApp (22.2.1):
+    - Firebase/CoreOnly (= 11.13.0)
+    - React-Core
+  - RNFBML (22.2.1):
+    - React-Core
+    - RNFBApp
   - RNScreens (3.29.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
@@ -1290,13 +1312,19 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
+  - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
+  - "RNFBML (from `../node_modules/@react-native-firebase/ml`)"
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
+    - Firebase
+    - FirebaseCore
+    - FirebaseCoreInternal
     - fmt
+    - GoogleUtilities
     - libevent
     - SocketRocket
     - sqlite3
@@ -1456,6 +1484,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-async-storage/async-storage"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
+  RNFBApp:
+    :path: "../node_modules/@react-native-firebase/app"
+  RNFBML:
+    :path: "../node_modules/@react-native-firebase/ml"
   RNScreens:
     :path: "../node_modules/react-native-screens"
   RNSVG:
@@ -1494,8 +1526,12 @@ SPEC CHECKSUMS:
   EXUpdatesInterface: 3e444e2093e25b7ca0999a7d8c16e8392dee70c3
   FBLazyVector: f64d1e2ea739b4d8f7e4740cde18089cd97fe864
   FBReactNativeSpec: 9f2b8b243131565335437dba74923a8d3015e780
+  Firebase: 3435bc66b4d494c2f22c79fd3aae4c1db6662327
+  FirebaseCore: c692c7f1c75305ab6aff2b367f25e11d73aa8bd0
+  FirebaseCoreInternal: 29d7b3af4aaf0b8f3ed20b568c13df399b06f68c
   fmt: ff9d55029c625d3757ed641535fd4a75fedc7ce9
   glog: c5d68082e772fa1c511173d6b30a9de2c05a69a2
+  GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 9cecf9953a681df7556b8cc9c74905de8f3293c0
   libevent: 4049cae6c81cdb3654a443be001fb9bdceff7913
   RCT-Folly: cd21f1661364f975ae76b3308167ad66b09f53f5
@@ -1540,8 +1576,10 @@ SPEC CHECKSUMS:
   React-runtimescheduler: a01dfb7ca980edebcc7d2d289ca900dea5d7e28b
   React-utils: 288c9cb9a73bb150c273c84df7c2f8546f28e23f
   ReactCommon: 2e5492a3e3a8e72d635c266405e49d12627e5bf0
-  RNCAsyncStorage: b6410dead2732b5c72a7fdb1ecb5651bbcf4674b
+  RNCAsyncStorage: a03b770a50541a761447cea9c24536047832124d
   RNDateTimePicker: 590f2000e4272050b98689cee6c8abc66c25bb22
+  RNFBApp: 557f15b87d602ed5879a1cbd6dc574481bccb278
+  RNFBML: e4b1fed949b53a6f0cecf1546dca56e01f482492
   RNScreens: 59f615aa0782077560c8eea46c2daec3a716dba9
   RNSVG: 6d5ed33b6635ed6d6ecb50744dcf127580c39ed5
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
@@ -1549,6 +1587,6 @@ SPEC CHECKSUMS:
   Yoga: 805bf71192903b20fc14babe48080582fee65a80
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: a22e0c036f10a1c8e010989930efc0707d3d63cd
+PODFILE CHECKSUM: caefee44a023f79c176d76beaa38771091f675d0
 
 COCOAPODS: 1.16.2

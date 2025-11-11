@@ -25,26 +25,41 @@ const getEnvVars = () => {
   const isExpoGo = Constants.appOwnership === 'expo';
   
   // Check environment variable
-  const environment = Constants.expoConfig?.extra?.environment || 'dev';
+  const environment = Constants.expoConfig?.extra?.environment || 'prod';
   
-  // For development, use localhost
-  if (__DEV__ || isExpoGo) {
+  // Use environment from app.json
+  if (environment === 'dev') {
     return ENV.dev;
-  }
-  
-  // For production builds
-  if (environment === 'prod') {
-    return ENV.prod;
   }
   
   if (environment === 'staging') {
     return ENV.staging;
   }
   
-  return ENV.dev;
+  if (environment === 'prod') {
+    return ENV.prod;
+  }
+  
+  // Fallback: For development, use localhost
+  if (__DEV__ || isExpoGo) {
+    return ENV.dev;
+  }
+  
+  return ENV.prod; // Default to production
 };
 
-export default getEnvVars();
+const config = getEnvVars();
+
+// Debug: Log which environment is being used
+console.log('🔧 API Config:', {
+  environment: Constants.expoConfig?.extra?.environment || 'prod',
+  isExpoGo: Constants.appOwnership === 'expo',
+  __DEV__,
+  apiUrl: config.apiUrl,
+  pythonApiUrl: config.pythonApiUrl,
+});
+
+export default config;
 
 // Helper to check if we're in development
 export const isDevelopment = __DEV__;

@@ -37,6 +37,33 @@ export default function HomeScreen() {
   const { t, language, setLanguage } = useLanguage();
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
 
+  // Helper function to get localized text
+  const getLocalizedText = (text: any): string => {
+    if (!text) return '';
+    
+    // If it's already a string, return it
+    if (typeof text === 'string') {
+      // Try to parse if it's a JSON string
+      try {
+        const parsed = JSON.parse(text);
+        if (typeof parsed === 'object' && parsed !== null) {
+          return parsed[language] || parsed.tr || parsed.en || '';
+        }
+        return text;
+      } catch (e) {
+        // Not JSON, return as is
+        return text;
+      }
+    }
+    
+    // If it's an object, get the localized version
+    if (typeof text === 'object' && text !== null) {
+      return text[language] || text.tr || text.en || '';
+    }
+    
+    return '';
+  };
+
   // Gradient colors based on theme
   const gradientColors = theme.name === 'Gece Teması'
     ? ['#1a1a2e', '#16213e', '#0f3460'] // Dark mode - deep blue/black
@@ -101,32 +128,6 @@ export default function HomeScreen() {
     if (hour < 12) return name ? `${t.home.goodMorning}, ${name}` : t.home.goodMorning;
     if (hour < 18) return name ? `${t.home.goodAfternoon}, ${name}` : t.home.goodAfternoon;
     return name ? `${t.home.goodEvening}, ${name}` : t.home.goodEvening;
-  };
-
-  const getLocalizedText = (text: any): string => {
-    if (!text) return '';
-    
-    // If it's already a string, return it
-    if (typeof text === 'string') {
-      // Try to parse if it's a JSON string
-      try {
-        const parsed = JSON.parse(text);
-        if (typeof parsed === 'object' && parsed !== null) {
-          return parsed[language] || parsed.tr || parsed.en || '';
-        }
-        return text;
-      } catch (e) {
-        // Not JSON, return as is
-        return text;
-      }
-    }
-    
-    // If it's an object, get the localized version
-    if (typeof text === 'object' && text !== null) {
-      return text[language] || text.tr || text.en || '';
-    }
-    
-    return '';
   };
 
   const handleWaterIntake = async () => {

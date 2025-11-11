@@ -83,9 +83,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.caloria.caloria'
+    namespace 'com.caloria.app'
     defaultConfig {
-        applicationId 'com.caloria.caloria'
+        applicationId 'com.caloria.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

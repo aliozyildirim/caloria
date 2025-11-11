@@ -9,25 +9,37 @@
       "**/*"
     ],
     "ios": {
+      "bundleIdentifier": "com.caloria.caloriaapp",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "Allow Caloria to use the camera for scanning barcodes on packaged food products.",
         "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select food photos for analysis.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
+        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone",
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSExceptionDomains": {
+            "caloria.qrsef.com": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSIncludesSubdomains": true
+            }
+          }
+        }
       }
     },
     "android": {
+      "package": "com.caloria.app",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
-        "android.permission.RECORD_AUDIO"
-      ]
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET"
+      ],
+
     },
     "notification": {
-      "icon": "./assets/notification-icon.png",
       "color": "#00BCD4",
       "androidMode": "default",
       "androidCollapsedTitle": "Caloria Hatırlatıcıları"
@@ -68,7 +80,7 @@
       "eas": {
         "projectId": "b1cb57ea-8028-48fe-8715-2714bcebc70c"
       },
-      "environment": "dev"
+      "environment": "prod"
     }
   }
 }

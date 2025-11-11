@@ -5,20 +5,17 @@
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal",
-      "env": {
-        "ENVIRONMENT": "dev"
-      }
+      "distribution": "internal"
     },
     "preview": {
-      "distribution": "internal",
-      "env": {
-        "ENVIRONMENT": "staging"
-      }
+      "android": {
+        "buildType": "apk"
+      },
+      "distribution": "internal"
     },
     "production": {
-      "env": {
-        "ENVIRONMENT": "prod"
+      "android": {
+        "buildType": "app-bundle"
       }
     }
   },

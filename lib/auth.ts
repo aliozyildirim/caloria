@@ -71,8 +71,11 @@ class AuthService {
       options.body = JSON.stringify(data);
     }
 
+    const fullUrl = `${API_BASE}${endpoint}`;
+    console.log('🌐 API Call:', { method, url: fullUrl, endpoint });
+
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, options);
+      const response = await fetch(fullUrl, options);
       
       // Response'u parse etmeden önce status kontrolü yap
       if (!response.ok) {
@@ -146,6 +149,7 @@ class AuthService {
 
   async register(fullName: string, email: string, username: string, password: string): Promise<User> {
     try {
+      console.log('📝 Register attempt:', { fullName, email, username });
       const response: AuthResponse = await this.apiCall('/auth/register', 'POST', {
         fullName,
         email,
@@ -161,9 +165,14 @@ class AuthService {
       this.notifyListeners();
       
       return this.user;
-    } catch (error) {
-      console.log('Register error:', fullName, email, username, password);
-      console.error('Register error:', error);
+    } catch (error: any) {
+      console.error('❌ Register error:', error.message || error);
+      // Daha anlamlı hata mesajı
+      if (error.message?.includes('Email veya kullanıcı adı')) {
+        throw new Error('Bu email veya kullanıcı adı zaten kullanılıyor');
+      } else if (error.message?.includes('Server error')) {
+        throw new Error('Sunucu hatası. Lütfen daha sonra tekrar deneyin.');
+      }
       throw error;
     }
   }
