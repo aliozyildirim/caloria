@@ -337,9 +337,9 @@ app.get('/api/meals', authenticateToken, async (req, res) => {
       params.push(date);
     }
 
-    query += ' ORDER BY COALESCE(date, DATE(created_at)) DESC, created_at DESC LIMIT ?';
+    // Add LIMIT directly to query (old MySQL doesn't support LIMIT with prepared statements)
     const limitValue = parseInt(limit) || 50;
-    params.push(limitValue);
+    query += ` ORDER BY COALESCE(date, DATE(created_at)) DESC, created_at DESC LIMIT ${limitValue}`;
     
     console.log('Meals query:', query);
     console.log('Meals params:', params);
@@ -959,8 +959,8 @@ app.get('/api/diet-logs', authenticateToken, async (req, res) => {
       params.push(endDate);
     }
     
-    query += ' ORDER BY date DESC LIMIT ?';
-    params.push(parseInt(limit));
+    const limitValue = parseInt(limit) || 30;
+    query += ` ORDER BY date DESC LIMIT ${limitValue}`;
     
     const [results] = await promisePool.execute(query, params);
     res.json(results);
@@ -1326,10 +1326,10 @@ app.get('/api/user/xp', authenticateToken, async (req, res) => {
 app.get('/api/user/xp-history', authenticateToken, async (req, res) => {
   try {
     const userId = req.user.userId;
-    const limit = req.query.limit || 10;
+    const limitValue = parseInt(req.query.limit) || 10;
     
-    const query = 'SELECT * FROM xp_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?';
-    const [results] = await promisePool.execute(query, [userId, parseInt(limit)]);
+    const query = `SELECT * FROM xp_transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT ${limitValue}`;
+    const [results] = await promisePool.execute(query, [userId]);
     
     res.json(results);
   } catch (error) {
@@ -2472,16 +2472,16 @@ app.post('/api/notifications/send-test', authenticateToken, async (req, res) => 
 app.get('/api/notifications/history', authenticateToken, async (req, res) => {
   try {
     console.log('🔔 GET /api/notifications/history - User:', req.user.userId);
-    const { limit = 50 } = req.query;
+    const limitValue = parseInt(req.query.limit) || 50;
     
     const query = `
       SELECT id, notification_type, title, body, status, sent_at, created_at
       FROM notification_logs 
       WHERE user_id = ?
       ORDER BY created_at DESC
-      LIMIT ?
+      LIMIT ${limitValue}
     `;
-    const [results] = await promisePool.execute(query, [req.user.userId, parseInt(limit)]);
+    const [results] = await promisePool.execute(query, [req.user.userId]);
     
     console.log('📜 Found', results.length, 'notifications');
     res.json(results);
@@ -2538,10 +2538,11 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
       query += ` AND up.updated_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)`;
     }
     
-    query += ` ORDER BY up.total_xp DESC LIMIT ?`;
-    
+    // Add LIMIT directly to query (old MySQL doesn't support LIMIT with prepared statements)
     const limitValue = parseInt(limit) || 10;
-    const [results] = await promisePool.execute(query, [limitValue]);
+    query += ` ORDER BY up.total_xp DESC LIMIT ${limitValue}`;
+    
+    const [results] = await promisePool.execute(query);
     
     // Add rank manually
     const leaderboardWithRank = results.map((user, index) => ({
