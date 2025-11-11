@@ -337,7 +337,11 @@ app.get('/api/meals', authenticateToken, async (req, res) => {
     }
 
     query += ' ORDER BY COALESCE(date, DATE(created_at)) DESC, created_at DESC LIMIT ?';
-    params.push(parseInt(limit));
+    const limitValue = parseInt(limit) || 50;
+    params.push(limitValue);
+    
+    console.log('Meals query:', query);
+    console.log('Meals params:', params);
 
     const [results] = await promisePool.execute(query, params);
     res.json(results);
