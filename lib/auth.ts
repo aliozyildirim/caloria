@@ -2,10 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from './config';
 
 // API Configuration
-// pythonApiUrl already includes /api in production
-const API_BASE = config.pythonApiUrl.endsWith('/api') 
-  ? config.pythonApiUrl 
-  : config.pythonApiUrl + '/api';
+// Use Node.js backend for auth, not Python backend
+const API_BASE = config.apiUrl;
 
 export interface User {
   id: number;
