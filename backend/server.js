@@ -20,12 +20,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // MySQL Connection with pooling and reconnection
 const dbConfig = {
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'root',
-  database: 'caloria_db',
-  connectionLimit: 10,
-  queueLimit: 0
+  host: process.env.DB_HOST || '127.0.0.1',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || 'root',
+  database: process.env.DB_NAME || 'caloria_db',
+  port: process.env.DB_PORT || 3306,
+  connectionLimit: parseInt(process.env.DB_CONNECTION_LIMIT) || 10,
+  queueLimit: parseInt(process.env.DB_QUEUE_LIMIT) || 0
 };
 
 const pool = mysql.createPool(dbConfig);
