@@ -318,8 +318,16 @@ app.get('/api/meals', authenticateToken, async (req, res) => {
   try {
     const { date, limit = 50 } = req.query;
     
+    // Debug user data
+    console.log('Get meals - user data:', req.user);
+    
+    const userId = req.user.userId || req.user.id || req.user.user_id;
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID not found in token' });
+    }
+    
     let query = 'SELECT * FROM meals WHERE user_id = ?';
-    let params = [req.user.userId];
+    let params = [userId];
 
     if (date) {
       // Try to use date field first, fallback to created_at if date is null
