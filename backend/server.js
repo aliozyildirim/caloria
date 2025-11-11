@@ -130,18 +130,13 @@ app.post('/api/auth/register', async (req, res) => {
 
     const userId = result.insertId;
     
-    // Debug JWT
-    console.log('JWT_SECRET type:', typeof process.env.JWT_SECRET);
-    console.log('JWT_SECRET value:', process.env.JWT_SECRET ? 'exists' : 'missing');
-    
-    const jwtSecret = process.env.JWT_SECRET || 'caloria_secret';
-    const jwtPayload = { userId: userId, email, username };
-    const jwtOptions = { expiresIn: '7d' };
-    
-    console.log('JWT payload:', jwtPayload);
-    console.log('JWT options:', jwtOptions);
-    
-    const token = jwt.sign(jwtPayload, jwtSecret, jwtOptions);
+    // JWT sign with explicit string conversion
+    const jwtSecret = String(process.env.JWT_SECRET || 'caloria_secret');
+    const token = jwt.sign(
+      { userId: userId, email: email, username: username }, 
+      jwtSecret, 
+      { expiresIn: '7d' }
+    );
 
     res.status(201).json({
       message: 'User created successfully',
