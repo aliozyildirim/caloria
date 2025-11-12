@@ -657,7 +657,10 @@ if __name__ == '__main__':
     # Pre-load the model
     try:
         food_model = get_food_model()
-        print(f"✅ Food Model loaded: {food_model.model is not None}")
+        if food_model.model is not None:
+            print(f"✅ AI Food Model loaded successfully")
+        else:
+            print(f"⚠️ Using Smart Fallback Mode (AI model not available)")
         print("✅ AI Nutritionist Model loaded")
     except Exception as e:
         print(f"❌ Model loading failed: {e}")
