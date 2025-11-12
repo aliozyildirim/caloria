@@ -36,8 +36,7 @@
         "android.permission.VIBRATE",
         "android.permission.RECORD_AUDIO",
         "android.permission.INTERNET"
-      ],
-
+      ]
     },
     "notification": {
       "color": "#00BCD4",

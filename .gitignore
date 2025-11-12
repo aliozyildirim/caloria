@@ -18,6 +18,11 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
+*.keystore
+!debug.keystore
+
+# Release APKs
+releases/
 web-build/
 
 # macOS
