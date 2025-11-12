@@ -2,8 +2,9 @@
 -- Migration: add_admin_column
 -- Date: 2025-11-12
 
+-- Add is_admin column (ignore error if already exists)
 ALTER TABLE users 
-ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ADD COLUMN is_admin BOOLEAN DEFAULT FALSE;
 
 -- Make first user admin (change email to your admin email)
 -- UPDATE users SET is_admin = TRUE WHERE email = 'admin@caloria.com';
