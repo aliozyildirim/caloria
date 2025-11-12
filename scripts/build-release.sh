@@ -25,9 +25,12 @@ echo "🧹 Cleaning previous builds..."
 cd android
 ./gradlew clean
 
-# Build release APK
+# Build release APK and AAB
 echo "🔨 Building release APK..."
 ./gradlew assembleRelease
+
+echo "📦 Building release AAB (for Google Play)..."
+./gradlew bundleRelease
 
 # Create releases directory
 cd ..
@@ -37,15 +40,23 @@ mkdir -p releases
 APK_SOURCE="android/app/build/outputs/apk/release/app-release.apk"
 APK_DEST="releases/caloria-v${VERSION}-release.apk"
 
-if [ -f "$APK_SOURCE" ]; then
+# Copy AAB with version
+AAB_SOURCE="android/app/build/outputs/bundle/release/app-release.aab"
+AAB_DEST="releases/caloria-v${VERSION}-release.aab"
+
+if [ -f "$APK_SOURCE" ] && [ -f "$AAB_SOURCE" ]; then
     cp "$APK_SOURCE" "$APK_DEST"
+    cp "$AAB_SOURCE" "$AAB_DEST"
     echo ""
     echo "✅ Build successful!"
-    echo "📍 APK Location: $APK_DEST"
+    echo "📍 APK Location: $APK_DEST (for testing)"
     echo "📊 APK Size: $(du -h "$APK_DEST" | cut -f1)"
     echo ""
-    echo "🎉 Ready to upload to Google Play Store!"
+    echo "📍 AAB Location: $AAB_DEST (for Google Play)"
+    echo "📊 AAB Size: $(du -h "$AAB_DEST" | cut -f1)"
+    echo ""
+    echo "🎉 Upload AAB to Google Play Store!"
 else
-    echo "❌ Build failed! APK not found."
+    echo "❌ Build failed! Files not found."
     exit 1
 fi
