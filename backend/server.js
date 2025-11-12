@@ -1427,8 +1427,30 @@ app.post('/api/admin/add-xp', authenticateToken, async (req, res) => {
 // ADMIN ROUTES
 // ===============================
 
+// Admin middleware - check if user is admin
+const isAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user.userId || req.user.id;
+    
+    // Check if user is admin
+    const [results] = await promisePool.execute(
+      'SELECT is_admin FROM users WHERE id = ?',
+      [userId]
+    );
+    
+    if (results.length === 0 || !results[0].is_admin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    next();
+  } catch (error) {
+    console.error('Admin check error:', error);
+    res.status(500).json({ error: 'Authorization failed' });
+  }
+};
+
 // Get all users (admin only)
-app.get('/api/admin/users', authenticateToken, async (req, res) => {
+app.get('/api/admin/users', authenticateToken, isAdmin, async (req, res) => {
   try {
     const query = 'SELECT id, email, username, full_name, avatar, is_active, last_login_at, created_at FROM users ORDER BY created_at DESC';
     const [results] = await promisePool.execute(query);
@@ -1440,7 +1462,7 @@ app.get('/api/admin/users', authenticateToken, async (req, res) => {
 });
 
 // Get all stories (admin only)
-app.get('/api/admin/stories', authenticateToken, async (req, res) => {
+app.get('/api/admin/stories', authenticateToken, isAdmin, async (req, res) => {
   try {
     const query = 'SELECT * FROM stories ORDER BY created_at DESC';
     const [results] = await promisePool.execute(query);
@@ -1452,7 +1474,7 @@ app.get('/api/admin/stories', authenticateToken, async (req, res) => {
 });
 
 // Get all meals (admin only)
-app.get('/api/admin/meals', authenticateToken, async (req, res) => {
+app.get('/api/admin/meals', authenticateToken, isAdmin, async (req, res) => {
   try {
     const query = `
       SELECT m.*, u.username, u.full_name 
@@ -1470,7 +1492,7 @@ app.get('/api/admin/meals', authenticateToken, async (req, res) => {
 });
 
 // Get database stats (admin only)
-app.get('/api/admin/stats', authenticateToken, async (req, res) => {
+app.get('/api/admin/stats', authenticateToken, isAdmin, async (req, res) => {
   try {
     const queries = [
       'SELECT COUNT(*) as count FROM users',
