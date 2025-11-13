@@ -2575,7 +2575,7 @@ app.get('/api/leaderboard', authenticateToken, async (req, res) => {
     
     // Get current user's rank
     const userRankQuery = `
-      SELECT COUNT(*) + 1 as rank FROM user_profiles up
+      SELECT COUNT(*) + 1 as \`rank\` FROM user_profiles up
       JOIN users u ON up.user_id = u.id
       WHERE u.is_active = TRUE AND up.total_xp > (
         SELECT total_xp FROM user_profiles WHERE user_id = ?

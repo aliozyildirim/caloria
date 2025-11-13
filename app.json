@@ -27,7 +27,7 @@
       }
     },
     "android": {
-      "package": "com.caloria.app",
+      "package": "com.caloriaapp.tracker",
       "permissions": [
         "android.permission.CAMERA",
         "android.permission.READ_EXTERNAL_STORAGE",

@@ -1,4 +1,4 @@
-package com.caloria.app
+package com.caloriaapp.tracker
 
 import android.os.Build
 import android.os.Bundle

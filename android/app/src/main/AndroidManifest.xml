@@ -32,7 +32,7 @@
         <category android:name="android.intent.category.DEFAULT"/>
         <category android:name="android.intent.category.BROWSABLE"/>
         <data android:scheme="caloria"/>
-        <data android:scheme="com.caloria.app"/>
+        <data android:scheme="com.caloriaapp.tracker"/>
         <data android:scheme="exp+caloria"/>
       </intent-filter>
     </activity>
