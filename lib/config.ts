@@ -1,11 +1,15 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+// Android emulator uses 10.0.2.2 to reach host machine's localhost
+const DEV_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 
 // Environment configuration
 const ENV = {
   dev: {
-    apiUrl: 'http://localhost:3001/api',
-    pythonApiUrl: 'http://localhost:5001',
-    wsUrl: 'ws://localhost:3001',
+    apiUrl: `http://${DEV_HOST}:3001/api`,
+    pythonApiUrl: `http://${DEV_HOST}:5001`,
+    wsUrl: `ws://${DEV_HOST}:3001`,
   },
   staging: {
     apiUrl: 'https://api-staging.caloria.app/api',
