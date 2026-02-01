@@ -246,6 +246,41 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Request account deletion (KVKK/GDPR - public endpoint, no auth)
+app.post('/api/auth/request-account-deletion', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+
+    if (!email || !username) {
+      return res.status(400).json({ error: 'E-posta ve kullanıcı adı gerekli' });
+    }
+
+    // Verify user exists and email+username match
+    const [users] = await promisePool.execute(
+      'SELECT id FROM users WHERE email = ? AND username = ? AND is_active = 1',
+      [email.trim(), username.trim()]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: 'Hesap bulunamadı. E-posta ve kullanıcı adının eşleştiğinden emin olun.' });
+    }
+
+    const userId = users[0].id;
+
+    // Delete user (CASCADE will delete related data)
+    await promisePool.execute('DELETE FROM users WHERE id = ?', [userId]);
+
+    console.log(`✅ Account deleted: userId=${userId}, email=${email}`);
+
+    res.json({
+      message: 'Hesabınız ve tüm verileriniz başarıyla silindi.'
+    });
+  } catch (error) {
+    console.error('Account deletion error:', error);
+    res.status(500).json({ error: 'Hesap silinirken bir hata oluştu. Lütfen destek@caloria.app ile iletişime geçin.' });
+  }
+});
+
 // ===============================
 // USER ROUTES
 // ===============================

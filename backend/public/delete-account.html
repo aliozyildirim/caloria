@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caloria - Hesap Silme</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; line-height: 1.6; }
+    h1 { color: #00BCD4; }
+    .warning { background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    form { margin: 20px 0; }
+    input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+    button { background: #00BCD4; color: white; padding: 12px 24px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #0097a7; }
+    .success { background: #d4edda; padding: 15px; border-radius: 8px; margin: 20px 0; display: none; }
+    .error { background: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0; display: none; }
+    a { color: #00BCD4; }
+  </style>
+</head>
+<body>
+  <h1>Hesap ve Veri Silme</h1>
+  <p>KVKK ve GDPR kapsamında, hesabınızı ve tüm ilişkili verilerinizi silme hakkına sahipsiniz.</p>
+
+  <div class="warning">
+    <strong>⚠️ Dikkat:</strong> Bu işlem geri alınamaz. Hesabınız, yemek kayıtlarınız, ilerleme verileriniz ve tüm diğer verileriniz kalıcı olarak silinecektir.
+  </div>
+
+  <h2>Hesabımı Sil</h2>
+  <p>Hesabınızı silmek için kayıtlı e-posta adresinizi girin:</p>
+  
+  <form id="deleteForm">
+    <input type="email" id="email" name="email" placeholder="E-posta adresiniz" required>
+    <input type="text" id="username" name="username" placeholder="Kullanıcı adınız (doğrulama için)" required>
+    <button type="submit">Hesabımı Sil</button>
+  </form>
+
+  <div id="successMsg" class="success"></div>
+  <div id="errorMsg" class="error"></div>
+
+  <p style="margin-top: 30px;">
+    Alternatif: <a href="mailto:destek@caloria.app?subject=Hesap%20Silme%20Talebi&body=E-posta:%20">E-posta ile talep gönderin</a>
+  </p>
+
+  <p><a href="privacy.html">← Gizlilik Politikası</a></p>
+
+  <script>
+    document.getElementById('deleteForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const successMsg = document.getElementById('successMsg');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      successMsg.style.display = 'none';
+      errorMsg.style.display = 'none';
+
+      try {
+        const baseUrl = window.location.origin;
+        const response = await fetch(baseUrl + '/api/auth/request-account-deletion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, username })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          successMsg.textContent = data.message || 'Hesabınız başarıyla silindi.';
+          successMsg.style.display = 'block';
+          document.getElementById('deleteForm').reset();
+        } else {
+          errorMsg.textContent = data.error || 'Bir hata oluştu.';
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Bağlantı hatası. Lütfen daha sonra tekrar deneyin veya e-posta ile iletişime geçin.';
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
