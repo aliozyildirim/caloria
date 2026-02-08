@@ -1113,3 +1113,30 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--text-muted);
 } 
+
+/* Download APK Button */
+.download-apk-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.download-apk-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.download-apk-btn i {
+    font-size: 16px;
+}
