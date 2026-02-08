@@ -282,14 +282,7 @@ export default function AuthScreen() {
                   )}
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.demoButton}
-                  onPress={handleDemoLogin}
-                  disabled={loading}
-                >
-                  <Ionicons name="play" size={16} color="white" />
-                  <Text style={styles.demoButtonText}>Demo Hesabı ile Giriş</Text>
-                </TouchableOpacity>
+                {/* Demo button geçici olarak kaldırıldı */}
               </View>
             ) : (
               /* Register Form */
