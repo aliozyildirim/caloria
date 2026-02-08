@@ -260,14 +260,15 @@ class AuthService {
     try {
       // Try to login with demo account
       try {
-        return await this.login('demo@caloria.com', 'demo123');
+        return await this.login('ahmet@demo.com', 'demo123');
       } catch (error) {
-        // If demo account doesn't exist, create it
+        // If demo account doesn't exist, try to create it
+        console.log('Demo account not found, trying to register...');
         return await this.register('Demo Kullanıcı', 'demo@caloria.com', 'demo', 'demo123');
       }
     } catch (error) {
       console.error('Demo login error:', error);
-      throw new Error('Demo hesabı oluşturulamadı');
+      throw new Error('Demo hesabı ile giriş yapılamadı. Lütfen internet bağlantınızı kontrol edin.');
     }
   }
 

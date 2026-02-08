@@ -17,9 +17,9 @@ const ENV = {
     wsUrl: 'wss://api-staging.caloria.app',
   },
   prod: {
-    apiUrl: 'http://caloria.qrsef.com/api',
-    pythonApiUrl: 'http://caloria.qrsef.com:5001',
-    wsUrl: 'ws://caloria.qrsef.com',
+    apiUrl: 'https://caloria.qrsef.com/api',
+    pythonApiUrl: 'https://caloria.qrsef.com:5001',
+    wsUrl: 'wss://caloria.qrsef.com',
   },
 };
 
